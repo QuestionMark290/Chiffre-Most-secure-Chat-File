@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiffre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<style>
+  :root{
+    --bg:#0A0F1C; --surface:#111A2E; --surface-2:#17233D; --line:#223252;
+    --accent:#4FD1C5; --accent-soft:#2A5C57;
+    --self-bubble:#2A3F73; --self-bubble-line:#405AA0;
+    --text:#E7ECF7; --muted:#7C8AA8; --danger:#EF7A63;
+    --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #14213E 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 110%, #10241F 0%, transparent 60%),
+      var(--bg);
+    color:var(--text); font-family:var(--font-body);
+    height:100dvh; overflow:hidden;
+  }
+  #app{width:100%;height:100dvh;}
+  .brandmark{display:flex;align-items:center;gap:10px;}
+  .brand-name{font-family:var(--font-display);font-weight:700;font-size:20px;}
+  .mono{font-family:var(--font-mono);}
+  button{font-family:var(--font-body);cursor:pointer;}
+  input{font-family:var(--font-body);}
+
+  .btn-primary{background:var(--accent);color:#08201D;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:box-shadow .15s,transform .15s;}
+  .btn-primary:hover{box-shadow:0 0 0 3px var(--accent-soft);}
+  .btn-primary:active{transform:scale(0.98);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:13px;transition:border-color .15s,color .15s;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--text);}
+  .lang-opt.sel{border-color:var(--accent);color:var(--text);}
+  .lang-big{display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 12px;border:2px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);transition:border-color .15s,transform .1s,box-shadow .15s;}
+  .lang-big:hover{border-color:var(--accent);}
+  .lang-big:active{transform:scale(.98);}
+  .lang-big.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .lang-big .lang-tag{font-family:var(--font-mono);font-size:20px;font-weight:600;color:var(--accent);letter-spacing:.06em;}
+  .lang-big .lang-name{font-size:14px;font-weight:500;}
+  .theme-opt:hover{border-color:var(--accent) !important;}
+
+  .shell{display:grid;grid-template-columns:300px 1fr;height:100dvh;background:var(--surface);overflow:hidden;}
+  .sidebar{background:var(--surface-2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;}
+  .sidebar-head{padding:20px;border-bottom:1px solid var(--line);}
+  .broker-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;}
+  .broker-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+  .broker-dot.error{background:var(--danger);}
+  .broker-status{font-size:11px;color:var(--muted);margin-top:12px;display:flex;align-items:center;}
+
+  .my-code-box{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .my-code-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;}
+  .my-code-value{font-family:var(--font-mono);font-size:19px;letter-spacing:.06em;color:var(--accent);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .copy-btn{background:none;border:none;color:var(--muted);padding:4px;border-radius:6px;transition:color .15s,background .15s;flex-shrink:0;}
+  .copy-btn:hover{color:var(--accent);background:var(--accent-soft);}
+  .copy-btn svg{display:block;}
+
+  .add-contact{padding:16px 20px;border-bottom:1px solid var(--line);}
+  .add-contact-row{display:flex;gap:8px;}
+  .add-contact input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-size:13px;font-family:var(--font-mono);outline:none;letter-spacing:.03em;}
+  .add-contact input:focus{border-color:var(--accent);}
+  .add-contact button{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:0 12px;font-size:16px;font-weight:600;}
+  .add-contact-error{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4;}
+  .add-contact-error.is-error{color:var(--danger);}
+
+  .contact-list{flex:1;overflow-y:auto;padding:8px;}
+  .contact{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s;margin-bottom:2px;position:relative;}
+  .contact:hover{background:var(--surface);}
+  .contact.active{background:var(--surface);box-shadow:inset 2px 0 0 var(--accent);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--self-bubble);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--accent);flex-shrink:0;position:relative;}
+  .presence-dot{position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:var(--muted);border:2px solid var(--surface-2);}
+  .presence-dot.online{background:var(--accent);}
+  .contact-name{font-size:13px;font-weight:500;font-family:var(--font-mono);}
+  .contact-sub{font-size:11px;color:var(--muted);}
+  .empty-contacts{padding:24px 20px;color:var(--muted);font-size:13px;line-height:1.6;}
+  .list-heading{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:12px 12px 6px;}
+  .contact.pending{cursor:default;}
+  .pending-actions{display:flex;gap:6px;flex-shrink:0;}
+  .pending-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s;}
+  .pending-btn.accept:hover{border-color:var(--accent);color:var(--accent);}
+  .pending-btn.reject:hover{border-color:var(--danger);color:var(--danger);}
+
+  .chat-pane{display:flex;flex-direction:column;min-height:0;height:100dvh;}
+  .chat-head{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .chat-head-title{display:flex;align-items:center;gap:10px;min-width:0;}
+  .lock-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent);border:1px solid var(--accent-soft);background:var(--accent-soft);padding:4px 9px;border-radius:20px;white-space:nowrap;}
+
+  .messages{flex:1;min-height:0;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:10px;}
+  .msg-row{display:flex;}
+  .msg-row.mine{justify-content:flex-end;}
+  .bubble{max-width:64%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.45;word-wrap:break-word;}
+  .bubble.theirs{background:var(--surface-2);border:1px solid var(--line);border-bottom-left-radius:4px;}
+  .bubble.mine{background:var(--self-bubble);border:1px solid var(--self-bubble-line);border-bottom-right-radius:4px;}
+  .bubble .meta{display:block;font-size:10px;color:var(--muted);margin-top:5px;font-family:var(--font-mono);}
+  .sender-label{display:block;font-size:11px;font-weight:600;font-family:var(--font-mono);color:var(--accent);margin-bottom:3px;}
+  .ticks{font-family:var(--font-body);letter-spacing:-2px;margin-left:2px;}
+  .ticks.read{color:var(--accent);letter-spacing:-2px;}
+  .contact-sub.typing{color:var(--accent);font-style:italic;}
+  .no-chat{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;text-align:center;padding:40px;line-height:1.6;}
+
+  .composer{padding:16px 20px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-shrink:0;}
+  .composer input{flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;}
+  .composer input:focus{border-color:var(--accent);}
+  .composer input:disabled{opacity:.5;}
+  .attach-btn{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;width:44px;height:44px;flex-shrink:0;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s;}
+  .attach-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .bubble.has-file{padding:8px;}
+  .msg-image{display:block;max-width:240px;max-height:260px;border-radius:10px;object-fit:cover;}
+  .file-meta-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px 2px;}
+  .file-name{font-size:13px;font-weight:500;word-break:break-all;}
+  .file-card{display:flex;align-items:center;gap:10px;min-width:200px;padding:4px;}
+  .file-icon{width:38px;height:38px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .file-info{flex:1;min-width:0;}
+  .file-size{font-size:11px;color:var(--muted);margin-top:2px;}
+  .file-dl{color:var(--muted);flex-shrink:0;display:flex;align-items:center;padding:6px;border-radius:8px;transition:color .15s,background .15s;text-decoration:none;}
+  .file-dl:hover{color:var(--accent);background:var(--accent-soft);}
+
+  .sidebar-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;}
+  .sidebar-foot button{flex:1;min-width:80px;font-size:12px;padding:8px;}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(4,8,18,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px;max-width:440px;width:100%;max-height:86dvh;overflow-y:auto;}
+  .modal h3{font-family:var(--font-display);margin:0 0 14px;font-size:18px;}
+  .modal p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 12px;}
+  .modal p b{color:var(--text);}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;}
+  .modal-field input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;outline:none;}
+  .modal-field input:focus{border-color:var(--accent);}
+  .member-pick{max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:6px;}
+  .member-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+  .member-row:hover{background:var(--surface-2);}
+  .member-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .member-row .mono{font-size:13px;}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+  .fingerprint{font-family:var(--font-mono);font-size:15px;letter-spacing:.08em;color:var(--accent);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center;word-spacing:6px;line-height:1.8;}
+
+  .avatar.group{background:#3A2F5E;color:#B9A9F0;border-radius:12px;}
+  .avatar.has-art{background:transparent;padding:0;overflow:hidden;}
+  .avatar.has-art svg{width:100%;height:100%;display:block;border-radius:50%;}
+  .avatar.has-art .presence-dot{position:absolute;bottom:-1px;right:-1px;}
+  .avatar-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .avatar-opt{aspect-ratio:1;border:2px solid var(--line);border-radius:12px;background:var(--surface-2);padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s;color:var(--muted);font-family:var(--font-mono);font-size:13px;}
+  .avatar-opt svg{width:100%;height:100%;}
+  .avatar-opt.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .avatar-opt:hover{border-color:var(--accent);}
+
+  /* Anruf */
+  .call-btn{background:var(--danger);border:none;border-radius:9px;width:34px;height:34px;flex-shrink:0;color:#2A0E08;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;}
+  .call-btn:hover{box-shadow:0 0 0 3px rgba(239,122,99,.3);}
+  .call-btn:active{transform:scale(.95);}
+  .call-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+  .warn-list{list-style:none;padding:0;margin:0 0 14px;}
+  .warn-list li{position:relative;padding:8px 0 8px 26px;font-size:13px;line-height:1.5;color:var(--muted);border-bottom:1px solid var(--line);}
+  .warn-list li:last-child{border-bottom:none;}
+  .warn-list li::before{content:'⚠';position:absolute;left:0;top:8px;color:var(--danger);}
+  .warn-list li b{color:var(--text);}
+  .danger-btn{background:var(--danger);color:#2A0E08;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;}
+  .danger-btn:hover{box-shadow:0 0 0 3px rgba(239,122,99,.3);}
+
+  .call-overlay{position:absolute;left:0;right:0;top:0;z-index:8;background:linear-gradient(180deg, #1A1030, #14213E);border-bottom:1px solid var(--line);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;}
+  .call-info{display:flex;align-items:center;gap:12px;min-width:0;}
+  .call-pulse{width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(79,209,197,.6);animation:callpulse 1.6s infinite;flex-shrink:0;}
+  @keyframes callpulse{0%{box-shadow:0 0 0 0 rgba(79,209,197,.5);}70%{box-shadow:0 0 0 10px rgba(79,209,197,0);}100%{box-shadow:0 0 0 0 rgba(79,209,197,0);}}
+  .call-title{font-size:14px;font-weight:600;}
+  .call-sub{font-size:12px;color:var(--muted);font-family:var(--font-mono);}
+  .call-actions{display:flex;gap:8px;flex-shrink:0;}
+  .call-mute{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;width:38px;height:38px;color:var(--text);display:flex;align-items:center;justify-content:center;}
+  .call-mute.muted{color:var(--danger);border-color:var(--danger);}
+  .call-hangup{background:var(--danger);color:#2A0E08;border:none;border-radius:9px;padding:0 16px;height:38px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;}
+
+  .settings-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);}
+  .settings-toggle .st-label{font-size:14px;}
+  .settings-toggle .st-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .switch .slider{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:.2s;cursor:pointer;}
+  .switch .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider::before{transform:translateX(20px);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+  @media (max-width:760px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{position:absolute;inset:0;z-index:5;}
+    .chat-pane{position:absolute;inset:0;z-index:6;}
+    .shell.show-sidebar .chat-pane{display:none;}
+    .back-btn{display:flex !important;}
+  }
+  .back-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   Chiffre — reine HTML-Datei, Peer-zu-Peer-Chat.
+   Jedes Gerät bekommt einen festen 10-stelligen Code (lokal
+   erzeugt, in localStorage gespeichert, bleibt gleich).
+   Freunde tragen euren Code ein → WebRTC-Direktverbindung.
+   Ein öffentlicher Vermittlungs-Dienst (PeerJS-Cloud) hilft nur
+   beim Erstkontakt, die Nachrichten selbst laufen danach direkt
+   und verschlüsselt zwischen euren Geräten, nicht über den Dienst.
+   ========================================================= */
+
+function loadContacts(){ return JSON.parse(localStorage.getItem('chiffre_contacts') || '[]'); }
+function saveContacts(list){ localStorage.setItem('chiffre_contacts', JSON.stringify(list)); }
+function isContactCode(code){ return loadContacts().some(c => c.code === code); }
+
+function loadPendingRequests(){ return JSON.parse(localStorage.getItem('chiffre_pending_requests') || '[]'); }
+function savePendingRequests(list){ localStorage.setItem('chiffre_pending_requests', JSON.stringify(list)); }
+
+function loadBlocked(){ return JSON.parse(localStorage.getItem('chiffre_blocked') || '[]'); }
+function saveBlocked(list){ localStorage.setItem('chiffre_blocked', JSON.stringify(list)); }
+
+/* ---------------- Gruppen ----------------
+   Eine Gruppe ist eine Mesh: jedes Mitglied verbindet sich direkt mit
+   jedem anderen. Gruppennachrichten werden pro Mitglied einzeln mit dem
+   bestehenden 1:1-Ende-zu-Ende-Schlüssel verschlüsselt — es gibt also
+   keinen zentralen Gruppenschlüssel, der verloren gehen könnte. */
+function loadGroups(){ return JSON.parse(localStorage.getItem('chiffre_groups') || '[]'); }
+function saveGroups(list){ localStorage.setItem('chiffre_groups', JSON.stringify(list)); }
+function getGroup(gid){ return loadGroups().find(g => g.id === gid) || null; }
+function isGroupMemberCode(code){
+  return loadGroups().some(g => g.members.includes(code));
+}
+function isAuthorizedCode(code){ return isContactCode(code) || isGroupMemberCode(code); }
+function groupThreadKey(gid){ return 'chiffre_thread_g:' + gid; }
+function loadGroupThread(gid){ return JSON.parse(localStorage.getItem(groupThreadKey(gid)) || '[]'); }
+function saveGroupThread(gid, arr){ localStorage.setItem(groupThreadKey(gid), JSON.stringify(arr)); }
+function otherMembers(group){ return group.members.filter(c => c !== myCode); }
+
+/* ---------------- Anruf-Einstellungen (pro Chat) ---------------- */
+function loadCallLocked(){ return JSON.parse(localStorage.getItem('chiffre_call_locked') || '[]'); }
+function saveCallLocked(list){ localStorage.setItem('chiffre_call_locked', JSON.stringify(list)); }
+function isCallLocked(code){ return loadCallLocked().includes(code); }
+function setCallLocked(code, on){
+  let list = loadCallLocked();
+  if (on && !list.includes(code)) list.push(code);
+  if (!on) list = list.filter(c => c !== code);
+  saveCallLocked(list);
+}
+function loadCallCodes(){ return JSON.parse(localStorage.getItem('chiffre_call_codes') || '{}'); }
+function saveCallCodes(o){ localStorage.setItem('chiffre_call_codes', JSON.stringify(o)); }
+function getCallCode(code){ return loadCallCodes()[code] || ''; }
+function setCallCode(code, pin){
+  const o = loadCallCodes();
+  if (pin) o[code] = pin; else delete o[code];
+  saveCallCodes(o);
+}
+
+// Ausgangs-Warteschlange: Payloads, die noch nicht zugestellt werden konnten.
+function outboxKey(code){ return 'chiffre_outbox_' + code; }
+function loadOutbox(code){ return JSON.parse(localStorage.getItem(outboxKey(code)) || '[]'); }
+function saveOutbox(code, list){ localStorage.setItem(outboxKey(code), JSON.stringify(list)); }
+function queueOutgoing(code, payload){
+  const box = loadOutbox(code);
+  box.push(payload);
+  saveOutbox(code, box);
+}
+function newId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+function threadKey(code){ return 'chiffre_thread_' + code; }
+function loadThread(code){ return JSON.parse(localStorage.getItem(threadKey(code)) || '[]'); }
+function saveThread(code, arr){ localStorage.setItem(threadKey(code), JSON.stringify(arr)); }
+
+const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000; // Standard: 24 Stunden
+
+// Löschtimer pro Unterhaltung. Schlüssel: Code (1:1) oder 'g:'+id (Gruppe).
+// Wert in ms, oder -1 für „nie".
+function loadTTLs(){ return JSON.parse(localStorage.getItem('chiffre_ttl') || '{}'); }
+function saveTTLs(o){ localStorage.setItem('chiffre_ttl', JSON.stringify(o)); }
+function getTTL(convKey){
+  const o = loadTTLs();
+  return convKey in o ? o[convKey] : DEFAULT_TTL_MS;
+}
+function setTTL(convKey, ms){
+  const o = loadTTLs();
+  o[convKey] = ms;
+  saveTTLs(o);
+}
+
+function purgeOldMessages(){
+  const now = Date.now();
+  let touchedActive = false;
+  loadContacts().forEach(c => {
+    const ttl = getTTL(c.code);
+    if (ttl === -1) return;
+    const cutoff = now - ttl;
+    const thread = loadThread(c.code);
+    const kept = thread.filter(m => m.ts >= cutoff);
+    if (kept.length !== thread.length){
+      saveThread(c.code, kept);
+      if (c.code === activeContact) touchedActive = true;
+    }
+  });
+  loadGroups().forEach(g => {
+    const ttl = getTTL('g:' + g.id);
+    if (ttl === -1) return;
+    const cutoff = now - ttl;
+    const thread = loadGroupThread(g.id);
+    const kept = thread.filter(m => m.ts >= cutoff);
+    if (kept.length !== thread.length){
+      saveGroupThread(g.id, kept);
+      if (g.id === activeGroup) touchedActive = true;
+    }
+  });
+  if (touchedActive) renderMessages();
+}
+
+function deleteChat(code){
+  if (!confirm('Chatverlauf mit ' + formatCode(code) + ' löschen? Wird auch beim Freund gelöscht, sobald er online ist.')) return;
+  localStorage.removeItem(threadKey(code));
+  const conn = connections[code];
+  if (conn && conn.open && sharedKeys[code]){
+    encryptPayload(code, { kind:'delete_chat' }).then(p => { if (p) conn.send(p); });
+  } else {
+    queueOutgoing(code, { kind:'delete_chat' });
+  }
+  renderMessages();
+}
+
+function removeContact(code){
+  if (!confirm('Kontakt ' + formatCode(code) + ' entfernen? Sinnvoll z.B. wenn er seinen Code geändert hat. Der lokale Chatverlauf wird mitgelöscht.')) return;
+  if (activeCall && activeCall.code === code) endCall(null);
+  saveContacts(loadContacts().filter(c => c.code !== code));
+  localStorage.removeItem(outboxKey(code));
+  setCallLocked(code, false);
+  setCallCode(code, '');
+  setContactAvatar(code, 'none');
+  const conn = connections[code];
+  if (conn){ try{ conn.close(); }catch(e){} delete connections[code]; }
+  delete online[code];
+  delete sharedKeys[code];
+  localStorage.removeItem(threadKey(code));
+  if (activeContact === code) activeContact = null;
+  renderContactList();
+  renderChatPane();
+}
+
+function acceptRequest(code){
+  savePendingRequests(loadPendingRequests().filter(c => c !== code));
+  const contacts = loadContacts();
+  if (!contacts.find(c => c.code === code)) contacts.push({ code, addedAt: Date.now() });
+  saveContacts(contacts);
+  renderContactList();
+}
+
+function rejectRequest(code){
+  savePendingRequests(loadPendingRequests().filter(c => c !== code));
+  const blocked = loadBlocked();
+  if (!blocked.includes(code)){ blocked.push(code); saveBlocked(blocked); }
+  const conn = connections[code];
+  if (conn){ try{ conn.close(); }catch(e){} delete connections[code]; }
+  delete online[code];
+  localStorage.removeItem(threadKey(code));
+  renderContactList();
+}
+
+function getMyCode(){
+  let code = localStorage.getItem('chiffre_my_code');
+  if (!code){
+    code = String(Math.floor(1000000000 + Math.random() * 9000000000));
+    localStorage.setItem('chiffre_my_code', code);
+  }
+  return code;
+}
+
+/* ---------------- Profilbilder ----------------
+   4 Auswahlmöglichkeiten: 'none' = wie bisher (Code-Initialen), plus drei
+   mysteriöse Motive. Dein gewähltes Bild wird beim Handshake an Kontakte
+   übermittelt, damit sie es sehen. */
+const AVATAR_IDS = ['none','hood','mask','phantom'];
+function getMyAvatar(){ return localStorage.getItem('chiffre_avatar') || 'none'; }
+function setMyAvatar(id){ localStorage.setItem('chiffre_avatar', AVATAR_IDS.includes(id) ? id : 'none'); }
+function loadContactAvatars(){ return JSON.parse(localStorage.getItem('chiffre_contact_avatars') || '{}'); }
+function saveContactAvatars(o){ localStorage.setItem('chiffre_contact_avatars', JSON.stringify(o)); }
+function getContactAvatar(code){ return loadContactAvatars()[code] || 'none'; }
+function setContactAvatar(code, id){
+  const o = loadContactAvatars();
+  if (id && id !== 'none') o[code] = id; else delete o[code];
+  saveContactAvatars(o);
+}
+
+// SVG eines mysteriösen Avatars.
+function avatarArt(id){
+  if (id === 'hood'){
+    return '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect width="40" height="40" rx="10" fill="#161B2E"/><path d="M20 8c-6 0-10 5-10 12v10h20V20c0-7-4-12-10-12z" fill="#2A3350"/><ellipse cx="20" cy="21" rx="7" ry="8" fill="#0A0D18"/><circle cx="17" cy="20" r="1.4" fill="#4FD1C5"/><circle cx="23" cy="20" r="1.4" fill="#4FD1C5"/></svg>';
+  }
+  if (id === 'mask'){
+    return '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect width="40" height="40" rx="10" fill="#241426"/><path d="M10 15c4-2 16-2 20 0 0 8-4 14-10 16-6-2-10-8-10-16z" fill="#3A2340"/><path d="M14 19c2-1.5 4-1.5 5 0M21 19c1-1.5 3-1.5 5 0" stroke="#D98AF0" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M17 26c2 1.5 4 1.5 6 0" stroke="#D98AF0" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
+  }
+  if (id === 'phantom'){
+    return '<svg viewBox="0 0 40 40" width="100%" height="100%"><rect width="40" height="40" rx="10" fill="#101A16"/><circle cx="20" cy="20" r="11" fill="none" stroke="#2E4A3C" stroke-width="1.5"/><path d="M20 11c-3 3-3 15 0 18M20 11c3 3 3 15 0 18M11 20h18" stroke="#5FD39C" stroke-width="1.3" fill="none" opacity=".8"/><circle cx="20" cy="20" r="3" fill="#5FD39C"/></svg>';
+  }
+  return '';
+}
+// Avatar-Markup für die Kontaktliste/Kopf. fallbackText = Initialen bei 'none'.
+function avatarMarkup(id, fallbackText, extraClass){
+  extraClass = extraClass || '';
+  if (id && id !== 'none'){
+    return '<div class="avatar has-art ' + extraClass + '">' + avatarArt(id) + '</div>';
+  }
+  return '<div class="avatar ' + extraClass + '">' + fallbackText + '</div>';
+}
+
+let myCode = getMyCode();
+let peer = null;
+let brokerState = 'connecting'; // connecting | on | error
+const connections = {};   // code -> RTCDataConnection
+const online = {};        // code -> bool
+const sharedKeys = {};    // code -> CryptoKey (AES-GCM, aus ECDH abgeleitet)
+const peerPubJwks = {};   // code -> öffentlicher JWK des Gegenübers (für Fingerprint)
+let myKeyPair = null;      // eigenes ECDH-Schlüsselpaar (nur im Speicher, pro Sitzung)
+let myPublicJwk = null;
+let activeContact = null;  // aktiver 1:1-Chat (Code) — oder null
+let activeGroup = null;    // aktive Gruppe (id) — oder null
+let reconnectTimer = null;
+
+// Anruf-Zustand (immer nur EIN aktiver Anruf → garantiert 2 Personen)
+let activeCall = null;     // { code, mediaConn, localStream, startTs, timer, muted }
+let pendingOutgoing = null;// { code, timeout } — warte auf Annahme
+let expectingCallFrom = null; // Code, dessen Medien-Anruf wir gleich annehmen
+let incomingCall = null;   // { code } — eingehende Anfrage, wartet auf uns
+const callMonitors = [];   // Intervall-IDs der Leck-Überwachung
+const typingState = {};    // code -> { active, timeout } eingehendes „schreibt gerade"
+let typingSentAt = 0;      // Drosselung fürs eigene Senden
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8 MB Grenze pro Datei
+
+/* ---------------- Krypto: ECDH -> AES-GCM ---------------- */
+const encUtf8 = new TextEncoder();
+const decUtf8 = new TextDecoder();
+
+function bytesToB64(bytes){
+  let bin = '';
+  const arr = new Uint8Array(bytes);
+  for (let i=0;i<arr.length;i++) bin += String.fromCharCode(arr[i]);
+  return btoa(bin);
+}
+function b64ToBytes(b64){ return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
+
+async function ensureKeyPair(){
+  if (myKeyPair) return;
+  const stored = localStorage.getItem('chiffre_identity');
+  if (stored){
+    try{
+      const { pub, priv } = JSON.parse(stored);
+      const publicKey = await crypto.subtle.importKey('jwk', pub, { name:'ECDH', namedCurve:'P-256' }, true, []);
+      const privateKey = await crypto.subtle.importKey('jwk', priv, { name:'ECDH', namedCurve:'P-256' }, true, ['deriveKey']);
+      myKeyPair = { publicKey, privateKey };
+      myPublicJwk = pub;
+      return;
+    } catch(e){ /* defekt -> neu erzeugen */ }
+  }
+  await generateAndStoreIdentity();
+}
+async function generateAndStoreIdentity(){
+  const kp = await crypto.subtle.generateKey({ name:'ECDH', namedCurve:'P-256' }, true, ['deriveKey']);
+  const pub = await crypto.subtle.exportKey('jwk', kp.publicKey);
+  const priv = await crypto.subtle.exportKey('jwk', kp.privateKey);
+  localStorage.setItem('chiffre_identity', JSON.stringify({ pub, priv }));
+  myKeyPair = kp;
+  myPublicJwk = pub;
+}
+
+// Key-Pinning: den öffentlichen Schlüssel eines Kontakts merken. Ändert er sich
+// später, ist das ein Warnsignal (möglicher Lauschangriff — oder der Kontakt hat
+// selbst seine Identität neu erzeugt).
+function keyFingerprint(jwk){ return (jwk.x || '') + '.' + (jwk.y || ''); }
+function loadPinned(){ return JSON.parse(localStorage.getItem('chiffre_pinned') || '{}'); }
+function savePinned(o){ localStorage.setItem('chiffre_pinned', JSON.stringify(o)); }
+function pinKey(code, jwk){ const o = loadPinned(); o[code] = keyFingerprint(jwk); savePinned(o); }
+function checkKeyPin(code, jwk){
+  const pinned = loadPinned()[code];
+  const fp = keyFingerprint(jwk);
+  if (!pinned) return 'first';
+  return pinned === fp ? 'ok' : 'changed';
+}
+
+async function regenerateIdentity(){
+  if (!confirm(currentLang==='en'
+    ? 'Really generate a new identity key? Your safety numbers change, your contacts get a "key changed" warning, and for security ALL chat histories on this device are deleted (your contacts are kept).'
+    : 'Identitätsschlüssel wirklich neu erzeugen? Deine Sicherheitsnummern ändern sich, deine Kontakte bekommen eine „Schlüssel geändert"-Warnung, und aus Sicherheitsgründen werden ALLE Chatverläufe auf diesem Gerät gelöscht (deine Kontakte bleiben erhalten).')) return;
+  // laufende Verbindungen trennen, damit ein frischer Handshake mit neuem Schlüssel läuft
+  if (activeCall) endCall(null);
+  Object.keys(connections).forEach(code => { try{ connections[code].close(); }catch(e){} delete connections[code]; });
+  Object.keys(online).forEach(k => delete online[k]);
+  Object.keys(sharedKeys).forEach(k => delete sharedKeys[k]);
+  Object.keys(peerPubJwks).forEach(k => delete peerPubJwks[k]);
+
+  // Alle Chatverläufe (1:1 und Gruppen) und Warteschlangen löschen — Kontakte/Gruppen bleiben.
+  const toDelete = [];
+  for (let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if (k && (k.startsWith('chiffre_thread_') || k.startsWith('chiffre_outbox_'))) toDelete.push(k);
+  }
+  toDelete.forEach(k => localStorage.removeItem(k));
+  // Gemerkte Schlüssel der Kontakte zurücksetzen, damit ihre neuen Schlüssel neu bestätigt werden.
+  localStorage.removeItem('chiffre_pinned');
+
+  myKeyPair = null;
+  await generateAndStoreIdentity();
+  attemptReconnects();
+  activeContact = null;
+  activeGroup = null;
+  renderContactList();
+  renderChatPane();
+  showCallPopup(t('security'), t('chats_wiped_identity'));
+}
+
+async function deriveSharedKey(code, theirPublicJwk){
+  peerPubJwks[code] = theirPublicJwk;
+  const theirKey = await crypto.subtle.importKey('jwk', theirPublicJwk, { name:'ECDH', namedCurve:'P-256' }, false, []);
+  const key = await crypto.subtle.deriveKey(
+    { name:'ECDH', public: theirKey }, myKeyPair.privateKey,
+    { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+  sharedKeys[code] = key;
+}
+
+/* ---------------- Sicherheits-Wipe ---------------- */
+function isAutoWipe(){ return localStorage.getItem('chiffre_autowipe') === '1'; }
+function setAutoWipe(on){ localStorage.setItem('chiffre_autowipe', on ? '1' : '0'); }
+
+// Löscht ALLE Chiffre-Daten dieses Geräts SOFORT. Die Warnung erscheint erst
+// DANACH — wenn längst nichts mehr da ist.
+function wipeEverything(reason){
+  // 1) Sofort und zuerst: alle Daten entfernen (keine Verzögerung, kein Dialog davor).
+  const keys = [];
+  for (let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if (k && k.startsWith('chiffre_')) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  // 2) Verbindungen und Anruf hart kappen.
+  try{ if (activeCall) endCall(null); }catch(e){}
+  try{ Object.keys(connections).forEach(c => { try{ connections[c].close(); }catch(e){} }); }catch(e){}
+  try{ if (peer) peer.destroy(); }catch(e){}
+  // 3) Erst jetzt die Warn-UI.
+  showWipedOverlay(reason);
+}
+
+function showWipedOverlay(reason){
+  app.innerHTML = `
+    <div style="min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;">
+      <div style="max-width:420px;text-align:center;background:var(--surface);border:1px solid var(--danger);border-radius:18px;padding:32px;">
+        <div style="font-size:40px;margin-bottom:10px;">🛡️</div>
+        <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--danger);margin-bottom:12px;">${t('wiped_title')}</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:22px;">${reason || t('wiped_generic')}</div>
+        <button class="btn-primary" id="wiped-ok" style="width:100%;padding:13px;">${t('wiped_ok')}</button>
+      </div>
+    </div>
+    <div id="modal-host"></div>
+  `;
+  document.getElementById('wiped-ok').addEventListener('click', () => location.reload());
+}
+
+// Warnung, wenn sich der Identitätsschlüssel eines Kontakts geändert hat
+// (und Auto-Wipe AUS ist).
+function notifyKeyChanged(code){
+  showCallPopup('⚠ Schlüssel geändert',
+    'Der Sicherheitsschlüssel von ' + formatCode(code) + ' ist anders als zuvor. '
+    + 'Das kann harmlos sein (der Kontakt hat seine Identität neu erzeugt) — oder ein Hinweis auf einen Lauschangriff. '
+    + 'Prüfe die Sicherheitsnummer über einen zweiten Weg, bevor du Sensibles schreibst.');
+}
+
+// Sicherheitsnummer: aus beiden öffentlichen Schlüsseln abgeleitet, auf beiden
+// Geräten identisch. Vergleicht man sie über einen zweiten Kanal (persönlich,
+// Telefon), erkennt man einen Lauschangriff auf den Vermittlungsdienst.
+async function safetyNumber(code){
+  const mine = myPublicJwk;
+  const theirs = peerPubJwks[code];
+  if (!mine || !theirs) return null;
+  const a = mine.x + mine.y;
+  const b = theirs.x + theirs.y;
+  const combined = [a, b].sort().join('|');
+  const digest = await crypto.subtle.digest('SHA-256', encUtf8.encode(combined));
+  const bytes = new Uint8Array(digest);
+  let num = '';
+  for (let i=0;i<15;i++) num += (bytes[i] % 10).toString();
+  return num.replace(/(\d{5})(?=\d)/g, '$1 ');
+}
+async function encryptPayload(code, obj){
+  const key = sharedKeys[code];
+  if (!key) return null;
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = encUtf8.encode(JSON.stringify(obj));
+  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, data);
+  return { type:'enc', iv: bytesToB64(iv), ct: bytesToB64(ct) };
+}
+async function decryptPayload(code, packet){
+  const key = sharedKeys[code];
+  if (!key) return null;
+  const plain = await crypto.subtle.decrypt(
+    { name:'AES-GCM', iv: b64ToBytes(packet.iv) }, key, b64ToBytes(packet.ct)
+  );
+  return JSON.parse(decUtf8.decode(plain));
+}
+
+// Alle wartenden Nachrichten/Dateien für einen Kontakt zustellen (nach Handshake).
+async function flushOutbox(code){
+  const conn = connections[code];
+  if (!conn || !conn.open || !sharedKeys[code]) return;
+  const box = loadOutbox(code);
+  if (!box.length) return;
+  const remaining = [];
+  for (const payload of box){
+    try{
+      const packet = await encryptPayload(code, payload);
+      if (packet) conn.send(packet);
+      else remaining.push(payload);
+    } catch(e){ remaining.push(payload); }
+  }
+  saveOutbox(code, remaining);
+}
+
+const app = document.getElementById('app');
+
+function iconLock(){
+  return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
+}
+function iconTrash(){
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
+}
+function iconCopy(){
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+}
+function iconUserMinus(){
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" y1="11" x2="23" y2="11"></line></svg>';
+}
+function iconPaperclip(){
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>';
+}
+function iconFile(){
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>';
+}
+function iconDownload(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+}
+function brandmark(size){
+  return '<div class="brandmark">'
+    + '<svg width="'+(size||24)+'" height="'+(size||24)+'" viewBox="0 0 48 48" fill="none">'
+    + '<circle cx="18" cy="20" r="12" stroke="#4FD1C5" stroke-width="2.5"/>'
+    + '<circle cx="30" cy="28" r="12" stroke="#8B7FF0" stroke-width="2.5"/>'
+    + '</svg><span class="brand-name">Chiffre</span></div>';
+}
+function formatCode(code){
+  return code.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+}
+
+/* ---------------- PeerJS Verbindung ---------------- */
+function initPeer(){
+  peer = new Peer(myCode, { debug: 0 });
+
+  peer.on('open', () => {
+    brokerState = 'on';
+    renderBrokerStatus();
+    attemptReconnects();
+  });
+  peer.on('error', (err) => {
+    brokerState = 'error';
+    renderBrokerStatus();
+    // eigener Code kurzzeitig noch belegt (z.B. Reload) -> automatisch erneut versuchen
+    if (err && err.type === 'unavailable-id'){
+      setTimeout(() => { try{ peer.reconnect(); }catch(e){} }, 2000);
+    }
+  });
+  peer.on('disconnected', () => {
+    brokerState = 'error';
+    renderBrokerStatus();
+    setTimeout(() => { try{ peer.reconnect(); }catch(e){} }, 2000);
+  });
+  peer.on('connection', (conn) => {
+    const code = conn.peer;
+    if (loadBlocked().includes(code)){ try{ conn.close(); }catch(e){} return; }
+    // Kontakte und Gruppenmitglieder sind autorisiert; alles andere wird zur Anfrage.
+    if (!isAuthorizedCode(code)){
+      const pending = loadPendingRequests();
+      if (!pending.includes(code)){ pending.push(code); savePendingRequests(pending); }
+    }
+    setupConnection(conn);
+    renderContactList();
+  });
+
+  // Eingehender Medien-Anruf. Wir nehmen NUR an, wenn wir ihn über den
+  // verschlüsselten Kanal vorher bestätigt haben (expectingCallFrom).
+  // Alles andere wird sofort geschlossen — so kann niemand ungefragt
+  // eine Audioverbindung aufbauen, und es bleiben garantiert genau 2 Personen.
+  peer.on('call', (mc) => {
+    const code = mc.peer;
+    if (code !== expectingCallFrom || !window._pendingLocalStream){
+      try{ mc.close(); }catch(e){}
+      return;
+    }
+    const localStream = window._pendingLocalStream;
+    const rawStream = window._pendingRawStream;
+    const voice = window._pendingVoice;
+    window._pendingLocalStream = null; window._pendingRawStream = null; window._pendingVoice = null;
+    expectingCallFrom = null;
+    mc.answer(localStream);
+    beginCall(code, mc, localStream, rawStream, voice);
+  });
+
+  if (reconnectTimer) clearInterval(reconnectTimer);
+  reconnectTimer = setInterval(attemptReconnects, 5000);
+}
+
+function regenerateMyCode(){
+  const sure = confirm(currentLang==='en'
+    ? 'Really change your code? Friends with your old code can no longer reach you until you give them the new one. To reconnect, open the chat yourself — only then does a request go to your friend.'
+    : 'Code wirklich ändern? Freunde mit deinem alten Code können dich danach nicht mehr erreichen, bis du ihnen den neuen Code gibst. Zum Wiederverbinden öffnest du den Chat selbst — erst dann geht eine Anfrage an deinen Freund.');
+  if (!sure) return;
+
+  Object.keys(connections).forEach(code => { try{ connections[code].close(); }catch(e){} delete connections[code]; });
+  Object.keys(online).forEach(k => delete online[k]);
+  Object.keys(sharedKeys).forEach(k => delete sharedKeys[k]);
+  if (reconnectTimer) clearInterval(reconnectTimer);
+  if (peer){ try{ peer.destroy(); }catch(e){} }
+
+  let newCode;
+  do { newCode = String(Math.floor(1000000000 + Math.random() * 9000000000)); } while (newCode === myCode);
+  myCode = newCode;
+  localStorage.setItem('chiffre_my_code', myCode);
+
+  // Nach einem Code-Wechsel kennt niemand deinen neuen Code. Damit deine
+  // Kontakte KEINE automatische Anfrage von einer unbekannten Nummer bekommen,
+  // werden alle Kontakte als „manuell" markiert: Die Verbindung (und damit die
+  // Anfrage beim Freund) entsteht erst, wenn DU den Chat aktiv öffnest.
+  const manual = new Set(loadManual());
+  loadContacts().forEach(c => manual.add(c.code));
+  saveManual(Array.from(manual));
+
+  brokerState = 'connecting';
+  activeContact = null;
+  activeGroup = null;
+  initPeer();
+  renderShell();
+}
+
+// Kontakte, die nach einem Code-Wechsel erst bei aktivem Öffnen verbinden.
+function loadManual(){ return JSON.parse(localStorage.getItem('chiffre_manual') || '[]'); }
+function saveManual(list){ localStorage.setItem('chiffre_manual', JSON.stringify(list)); }
+function clearManual(code){ saveManual(loadManual().filter(c => c !== code)); }
+
+function attemptReconnects(){
+  if (!peer || peer.disconnected) return;
+  const manual = loadManual();
+  const codes = new Set();
+  loadContacts().forEach(c => { if (!manual.includes(c.code)) codes.add(c.code); });
+  loadGroups().forEach(g => otherMembers(g).forEach(c => { if (!manual.includes(c)) codes.add(c); }));
+  codes.forEach(code => {
+    if (code && code !== myCode && !connections[code]){
+      try{ setupConnection(peer.connect(code, { reliable: true })); }catch(e){}
+    }
+  });
+}
+
+// Verbindung zu einem Kontakt bewusst aufbauen (beim Öffnen des Chats).
+function connectManually(code){
+  clearManual(code);
+  if (!connections[code] && peer && !peer.disconnected){
+    try{ setupConnection(peer.connect(code, { reliable: true })); }catch(e){}
+  }
+}
+
+function setupConnection(conn){
+  const code = conn.peer;
+  if (connections[code] && connections[code].open) return;
+  connections[code] = conn;
+
+  conn.on('open', async () => {
+    online[code] = true;
+    await ensureKeyPair();
+    conn.send({ type:'handshake', pub: myPublicJwk, avatar: getMyAvatar() });
+    renderContactList();
+    if (activeContact === code) renderChatHead();
+    if (activeGroup) renderChatHead();
+  });
+
+  conn.on('data', async (data) => {
+    if (!data) return;
+
+    if (data.type === 'handshake'){
+      await ensureKeyPair();
+      const verdict = checkKeyPin(code, data.pub);
+      if (verdict === 'changed'){
+        // Möglicher Angriff: der Schlüssel dieses Kontakts ist ein anderer als gemerkt.
+        if (isAutoWipe()){
+          wipeEverything(t('wiped_keychange', formatCode(code)));
+          return;
+        }
+        notifyKeyChanged(code);
+      }
+      pinKey(code, data.pub); // (neu) vertrauen — bei Verdacht wurde bereits gewarnt
+      if (data.avatar !== undefined) setContactAvatar(code, data.avatar);
+      await deriveSharedKey(code, data.pub);
+      await flushOutbox(code);
+      renderContactList();
+      if (activeContact === code) { renderChatHead(); renderMessages(); }
+      if (activeGroup) renderChatHead();
+      return;
+    }
+
+    if (data.type === 'enc'){
+      let payload;
+      try{ payload = await decryptPayload(code, data); }
+      catch(e){ return; }
+      if (!payload) return;
+
+      if (payload.kind === 'delete_chat'){
+        localStorage.removeItem(threadKey(code));
+        if (activeContact === code) renderMessages();
+        renderContactList();
+        return;
+      }
+
+      // Gruppeneinladung — nur von bereits bestätigten Kontakten akzeptieren.
+      if (payload.kind === 'group_invite'){
+        if (!isContactCode(code)) return; // Sicherheit: keine Einladungen von Fremden
+        const g = payload.group;
+        if (!g || !g.id || !Array.isArray(g.members)) return;
+        if (!g.members.includes(myCode)) return; // ich muss wirklich Mitglied sein
+        const groups = loadGroups();
+        if (!groups.find(x => x.id === g.id)){
+          groups.push({ id: g.id, name: String(g.name || 'Gruppe').slice(0,60), members: g.members });
+          saveGroups(groups);
+          attemptReconnects();
+          renderContactList();
+        }
+        return;
+      }
+
+      // Gruppennachricht — nur akzeptieren, wenn Absender wirklich Mitglied ist.
+      if (payload.kind === 'group_msg' || payload.kind === 'group_file'){
+        const group = getGroup(payload.gid);
+        if (!group) return;
+        if (!group.members.includes(code)) return; // Sicherheit: Absender muss Mitglied sein
+        const thread = loadGroupThread(payload.gid);
+        if (payload.id && thread.some(m => m.id === payload.id)) return;
+        const entry = { from: code, ts: payload.ts || Date.now(), id: payload.id };
+        if (payload.kind === 'group_msg'){ entry.text = payload.text; }
+        else { entry.file = { name: payload.name, mime: payload.mime, size: payload.size, data: payload.data }; }
+        thread.push(entry);
+        saveGroupThread(payload.gid, thread);
+        if (activeGroup === payload.gid) renderMessages();
+        else renderContactList();
+        return;
+      }
+
+      // ---- Anruf-Signalisierung (verschlüsselt) ----
+      if (payload.kind === 'call_request'){
+        handleIncomingCallRequest(code, payload);
+        return;
+      }
+      if (payload.kind === 'call_accept'){
+        if (pendingOutgoing && pendingOutgoing.code === code){
+          clearTimeout(pendingOutgoing.timeout);
+          const localStream = pendingOutgoing.localStream;
+          const rawStream = pendingOutgoing.rawStream;
+          const voice = pendingOutgoing.voice;
+          pendingOutgoing = null;
+          try{
+            const mc = peer.call(code, localStream);
+            beginCall(code, mc, localStream, rawStream, voice);
+          } catch(e){
+            stopStream(rawStream); if (voice) voice.destroy();
+            showCallPopup('Anruf fehlgeschlagen', 'Die Medienverbindung konnte nicht aufgebaut werden.');
+          }
+        }
+        return;
+      }
+      if (payload.kind === 'call_reject'){
+        if (pendingOutgoing && pendingOutgoing.code === code){
+          clearTimeout(pendingOutgoing.timeout);
+          stopStream(pendingOutgoing.rawStream);
+          if (pendingOutgoing.voice) pendingOutgoing.voice.destroy();
+          pendingOutgoing = null;
+          const reasons = {
+            locked: 'Der Kontakt hat Anrufe für diesen Chat gesperrt.',
+            busy: 'Der Kontakt ist bereits in einem anderen Gespräch.',
+            bad_code: 'Falscher Beitritts-Code.',
+            declined: 'Der Kontakt hat den Anruf abgelehnt.'
+          };
+          showCallPopup('Anruf nicht möglich', reasons[payload.reason] || 'Der Anruf wurde abgelehnt.');
+        }
+        return;
+      }
+      if (payload.kind === 'call_end'){
+        if (activeCall && activeCall.code === code){
+          endCall('Die andere Person hat aufgelegt.', { fromRemote:true });
+        }
+        if (incomingCall && incomingCall.code === code){
+          incomingCall = null; closeModal();
+        }
+        return;
+      }
+
+      // ---- „schreibt gerade …" (flüchtig) ----
+      if (payload.kind === 'typing'){
+        setTypingFrom(code, !!payload.state);
+        return;
+      }
+      // ---- Profilbild-Update ----
+      if (payload.kind === 'avatar'){
+        setContactAvatar(code, payload.avatar);
+        renderContactList();
+        if (activeContact === code) renderChatHead();
+        return;
+      }
+      // ---- Zustell-/Lesebestätigung ----
+      if (payload.kind === 'receipt'){
+        const thread = loadThread(code);
+        let changed = false;
+        (payload.ids || []).forEach(id => {
+          const m = thread.find(x => x.id === id && x.from === 'me');
+          if (m){
+            // read > delivered > sent — nie zurückstufen
+            const rank = { sent:0, delivered:1, read:2 };
+            if ((rank[payload.state] || 0) > (rank[m.status] || 0)){ m.status = payload.state; changed = true; }
+          }
+        });
+        if (changed){ saveThread(code, thread); if (activeContact === code) renderMessages(); }
+        return;
+      }
+
+      if (payload.kind === 'msg' || payload.kind === 'file'){
+        const thread = loadThread(code);
+        // Duplikat-Schutz: dieselbe Nachricht nicht zweimal speichern.
+        if (payload.id && thread.some(m => m.id === payload.id)) return;
+        const entry = { from: code, ts: payload.ts || Date.now(), id: payload.id };
+        if (payload.kind === 'msg'){ entry.text = payload.text; }
+        else { entry.file = { name: payload.name, mime: payload.mime, size: payload.size, data: payload.data }; }
+        thread.push(entry);
+        saveThread(code, thread);
+        setTypingFrom(code, false);
+        // Zustellung bestätigen; wenn Chat gerade offen ist, gilt es als gelesen.
+        const state = (activeContact === code) ? 'read' : 'delivered';
+        sendReceipt(code, [payload.id], state);
+        if (activeContact === code) renderMessages();
+        else renderContactList();
+      }
+    }
+  });
+
+  conn.on('close', () => {
+    online[code] = false;
+    delete connections[code];
+    delete sharedKeys[code];
+    renderContactList();
+    if (activeContact === code) renderChatHead();
+    if (activeGroup) renderChatHead();
+  });
+  conn.on('error', () => {
+    online[code] = false;
+    delete connections[code];
+    delete sharedKeys[code];
+    renderContactList();
+    if (activeGroup) renderChatHead();
+  });
+}
+
+function renderBrokerStatus(){
+  const dot = document.getElementById('broker-dot');
+  const label = document.getElementById('broker-label');
+  if (!dot) return;
+  dot.className = 'broker-dot ' + brokerState;
+  label.textContent = brokerState === 'on' ? t('broker_on')
+    : brokerState === 'error' ? t('broker_err')
+    : t('connecting');
+}
+
+/* ---------------- UI ---------------- */
+function renderShell(){
+  app.innerHTML = `
+    <div class="shell" id="shell">
+      <div class="sidebar">
+        <div class="sidebar-head">
+          ${brandmark(22)}
+          <div class="broker-status"><span class="broker-dot" id="broker-dot"></span><span id="broker-label">${t('connecting')}</span></div>
+          <div class="my-code-box" style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar ${getMyAvatar()!=='none'?'has-art':''}" style="width:40px;height:40px;">${getMyAvatar()!=='none' ? avatarArt(getMyAvatar()) : formatCode(myCode).slice(0,2)}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="my-code-label">${t('your_code')}</div>
+              <div class="my-code-value">
+                <span class="mono" id="my-code-text">${formatCode(myCode)}</span>
+                <button class="copy-btn" id="copy-code-btn" title="Copy">${iconCopy()}</button>
+              </div>
+            </div>
+          </div>
+          <button class="btn-ghost" id="change-code-btn" style="margin-top:10px;width:100%;font-size:12px;padding:8px;">${t('change_code')}</button>
+        </div>
+        <div class="add-contact">
+          <div class="add-contact-row">
+            <input id="friend-input" type="text" inputmode="numeric" maxlength="10" placeholder="${t('friend_code_ph')}">
+            <button id="add-friend-btn">→</button>
+          </div>
+          <div class="add-contact-error" id="add-friend-error"></div>
+        </div>
+        <div class="contact-list" id="contact-list"></div>
+        <div class="sidebar-foot">
+          <button class="btn-ghost" id="new-group-btn">＋ ${t('group')}</button>
+          <button class="btn-ghost" id="security-btn">${t('security')}</button>
+          <button class="btn-ghost" id="design-btn">${t('design_btn')}</button>
+          <button class="btn-ghost" id="info-btn">${t('info')}</button>
+        </div>
+      </div>
+      <div class="chat-pane" id="chat-pane"></div>
+    </div>
+    <div id="modal-host"></div>
+  `;
+
+  document.getElementById('copy-code-btn').addEventListener('click', () => {
+    navigator.clipboard.writeText(myCode).then(() => {
+      const el = document.getElementById('my-code-text');
+      const old = el.textContent;
+      el.textContent = t('copied');
+      setTimeout(() => { el.textContent = old; }, 1200);
+    });
+  });
+
+  document.getElementById('change-code-btn').addEventListener('click', regenerateMyCode);
+  document.getElementById('new-group-btn').addEventListener('click', openGroupModal);
+  document.getElementById('security-btn').addEventListener('click', openSecurityModal);
+  document.getElementById('design-btn').addEventListener('click', openDesignModal);
+  document.getElementById('info-btn').addEventListener('click', openInfoModal);
+
+  document.getElementById('add-friend-btn').addEventListener('click', addFriend);
+  document.getElementById('friend-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addFriend();
+  });
+  document.getElementById('friend-input').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+  });
+
+  renderBrokerStatus();
+  renderContactList();
+  renderChatPane();
+  if (window.matchMedia('(max-width:760px)').matches) showSidebarOnMobile();
+}
+
+function addFriend(){
+  const input = document.getElementById('friend-input');
+  const errorEl = document.getElementById('add-friend-error');
+  const code = input.value.trim();
+  errorEl.classList.remove('is-error');
+  errorEl.textContent = '';
+
+  if (code.length !== 10){ errorEl.textContent = t('code_len'); errorEl.classList.add('is-error'); return; }
+  if (code === myCode){ errorEl.textContent = t('code_is'); errorEl.classList.add('is-error'); return; }
+
+  const contacts = loadContacts();
+  if (!contacts.find(c => c.code === code)){
+    contacts.push({ code, addedAt: Date.now() });
+    saveContacts(contacts);
+  }
+  input.value = '';
+  activeContact = code;
+  activeGroup = null;
+  connectManually(code);
+  renderContactList();
+  renderChatPane();
+}
+
+function renderContactList(){
+  const list = document.getElementById('contact-list');
+  if (!list) return;
+  const contacts = loadContacts();
+  const pending = loadPendingRequests();
+  const groups = loadGroups();
+
+  if (contacts.length === 0 && pending.length === 0 && groups.length === 0){
+    list.innerHTML = '<div class="empty-contacts">' + t('no_contacts') + '</div>';
+    return;
+  }
+
+  let html = '';
+  if (pending.length){
+    html += '<div class="list-heading">' + t('requests') + '</div>';
+    html += pending.map(code => `
+      <div class="contact pending">
+        <div class="avatar">?</div>
+        <div style="flex:1;">
+          <div class="contact-name">${t('unknown_contact')}</div>
+          <div class="contact-sub">${t('wants_chat')}</div>
+        </div>
+        <div class="pending-actions">
+          <button class="pending-btn accept" data-action="accept" data-code="${code}" title="✓">✓</button>
+          <button class="pending-btn reject" data-action="reject" data-code="${code}" title="✕">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (groups.length){
+    html += '<div class="list-heading">' + t('groups') + '</div>';
+    html += groups.map(g => {
+      const onlineCount = otherMembers(g).filter(c => online[c]).length;
+      const total = otherMembers(g).length;
+      return `<div class="contact ${g.id===activeGroup ? 'active':''}" data-group="${g.id}">
+        <div class="avatar group">${iconGroupSmall()}</div>
+        <div style="min-width:0;">
+          <div class="contact-name" style="font-family:var(--font-body);">${escapeHtml(g.name)}</div>
+          <div class="contact-sub">${onlineCount}/${total} ${t('online_n')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (contacts.length){
+    html += '<div class="list-heading">' + t('contacts') + '</div>';
+    html += contacts.map(c => {
+      const isOnline = !!online[c.code];
+      const av = getContactAvatar(c.code);
+      const inner = (av !== 'none' ? avatarArt(av) : c.code.slice(0,2)) + `<span class="presence-dot ${isOnline?'online':''}"></span>`;
+      return `<div class="contact ${(c.code===activeContact) ? 'active':''}" data-code="${c.code}">
+        <div class="avatar ${av!=='none'?'has-art':''}">${inner}</div>
+        <div>
+          <div class="contact-name">${formatCode(c.code)}</div>
+          <div class="contact-sub">${isOnline ? t('online') : t('offline')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  list.innerHTML = html;
+
+  list.querySelectorAll('.contact[data-code]:not(.pending)').forEach(el => {
+    el.addEventListener('click', () => {
+      activeContact = el.dataset.code;
+      activeGroup = null;
+      connectManually(activeContact);
+      showChatOnMobile();
+      renderContactList();
+      renderChatPane();
+    });
+  });
+  list.querySelectorAll('.contact[data-group]').forEach(el => {
+    el.addEventListener('click', () => {
+      activeGroup = el.dataset.group;
+      activeContact = null;
+      showChatOnMobile();
+      renderContactList();
+      renderChatPane();
+    });
+  });
+  list.querySelectorAll('.pending-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const code = btn.dataset.code;
+      if (btn.dataset.action === 'accept') acceptRequest(code);
+      else rejectRequest(code);
+    });
+  });
+}
+
+function showChatOnMobile(){
+  const shell = document.getElementById('shell');
+  if (shell) shell.classList.remove('show-sidebar');
+}
+function showSidebarOnMobile(){
+  const shell = document.getElementById('shell');
+  if (shell) shell.classList.add('show-sidebar');
+}
+
+function renderChatPane(){
+  const pane = document.getElementById('chat-pane');
+  if (!pane) return;
+  if (!activeContact && !activeGroup){
+    pane.innerHTML = '<div class="no-chat">' + t('pick_chat') + '</div>';
+    return;
+  }
+  pane.innerHTML = `
+    <div class="chat-head" id="chat-head"></div>
+    <div class="messages" id="messages"></div>
+    <div class="composer">
+      <input id="file-input" type="file" style="display:none">
+      <button class="attach-btn" id="attach-btn" title="+">${iconPaperclip()}</button>
+      <input id="msg-input" type="text" placeholder="${t('write_msg')}">
+      <button class="btn-primary" id="send-btn">${t('send')}</button>
+    </div>
+  `;
+  renderChatHead();
+  renderMessages();
+  document.getElementById('send-btn').addEventListener('click', sendCurrentMessage);
+  document.getElementById('msg-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendCurrentMessage();
+  });
+  document.getElementById('msg-input').addEventListener('input', () => {
+    if (activeContact){
+      const v = document.getElementById('msg-input').value;
+      sendTyping(v.length > 0);
+    }
+  });
+  document.getElementById('attach-btn').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+  });
+  document.getElementById('file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) sendFile(file);
+    e.target.value = '';
+  });
+  // Laufenden Anruf-Balken wieder anzeigen, wenn er zum offenen Chat gehört.
+  if (activeCall && activeCall.code === activeContact) renderCallOverlay();
+}
+
+function renderChatHead(){
+  const head = document.getElementById('chat-head');
+  if (!head) return;
+
+  if (activeGroup){
+    const g = getGroup(activeGroup);
+    if (!g) return;
+    const onlineCount = otherMembers(g).filter(c => online[c]).length;
+    const total = otherMembers(g).length;
+    head.innerHTML = `
+      <div class="chat-head-title">
+        <button class="back-btn" id="back-btn">←</button>
+        <div class="avatar group">${iconGroupSmall()}</div>
+        <div style="min-width:0;">
+          <div style="font-weight:600;font-size:14px;">${escapeHtml(g.name)}</div>
+          <div class="contact-sub">${total} ${t('members')} · ${onlineCount} ${t('online_n')}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="lock-badge">${iconLock()} ${t('e2e')}</div>
+        <button class="copy-btn" id="ttl-btn" title="${t('delete_timer')}">${iconTimer()}</button>
+        <button class="copy-btn" id="group-members-btn" title="${t('members_t')}">${iconUsers()}</button>
+        <button class="copy-btn" id="delete-chat-btn" title="${t('group_delete_t')}">${iconTrash()}</button>
+        <button class="copy-btn" id="leave-group-btn" title="${t('leave_group')}">${iconUserMinus()}</button>
+      </div>
+    `;
+    const back = document.getElementById('back-btn');
+    if (back) back.addEventListener('click', showSidebarOnMobile);
+    document.getElementById('ttl-btn').addEventListener('click', () => openTTLModal('g:' + g.id));
+    document.getElementById('group-members-btn').addEventListener('click', () => openGroupMembersModal(g.id));
+    document.getElementById('delete-chat-btn').addEventListener('click', () => deleteGroupChat(g.id));
+    document.getElementById('leave-group-btn').addEventListener('click', () => leaveGroup(g.id));
+    return;
+  }
+
+  if (!activeContact) return;
+  const isOnline = !!online[activeContact];
+  const isTyping = typingState[activeContact] && typingState[activeContact].active;
+  const subText = isTyping ? t('typing')
+    : (isOnline ? t('online_direct') : t('offline_queue'));
+  const headAv = getContactAvatar(activeContact);
+  const headInner = (headAv !== 'none' ? avatarArt(headAv) : activeContact.slice(0,2)) + `<span class="presence-dot ${isOnline?'online':''}"></span>`;
+  head.innerHTML = `
+    <div class="chat-head-title">
+      <button class="back-btn" id="back-btn">←</button>
+      <div class="avatar ${headAv!=='none'?'has-art':''}">${headInner}</div>
+      <div style="min-width:0;">
+        <div style="font-weight:600;font-size:14px;font-family:var(--font-mono);">${formatCode(activeContact)}</div>
+        <div class="contact-sub ${isTyping?'typing':''}">${subText}</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="lock-badge">${iconLock()} ${sharedKeys[activeContact] ? t('e2e') : t('connecting_badge')}</div>
+      <button class="call-btn" id="call-btn" title="${t('call')}" ${isCallLocked(activeContact)?'disabled':''}>${iconPhone()}</button>
+      <button class="copy-btn" id="ttl-btn" title="${t('delete_timer')}">${iconTimer()}</button>
+      <button class="copy-btn" id="call-settings-btn" title="${t('call_settings')}">${iconGear()}</button>
+      <button class="copy-btn" id="verify-btn" title="${t('verify')}">${iconShield()}</button>
+      <button class="copy-btn" id="delete-chat-btn" title="${t('delete_chat_t')}">${iconTrash()}</button>
+      <button class="copy-btn" id="remove-contact-btn" title="${t('remove_contact')}">${iconUserMinus()}</button>
+    </div>
+  `;
+  const back = document.getElementById('back-btn');
+  if (back) back.addEventListener('click', showSidebarOnMobile);
+  document.getElementById('call-btn').addEventListener('click', () => openCallWarning(activeContact));
+  document.getElementById('ttl-btn').addEventListener('click', () => openTTLModal(activeContact));
+  document.getElementById('call-settings-btn').addEventListener('click', () => openCallSettings(activeContact));
+  document.getElementById('verify-btn').addEventListener('click', () => openVerifyModal(activeContact));
+  document.getElementById('delete-chat-btn').addEventListener('click', () => deleteChat(activeContact));
+  document.getElementById('remove-contact-btn').addEventListener('click', () => removeContact(activeContact));
+}
+
+function fmtSize(bytes){
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+function renderMessages(){
+  const container = document.getElementById('messages');
+  if (!container) return;
+  const isGroup = !!activeGroup;
+  const thread = isGroup ? loadGroupThread(activeGroup) : (activeContact ? loadThread(activeContact) : []);
+  if (!isGroup && !activeContact) return;
+
+  container.innerHTML = thread.map((m) => {
+    const mine = m.from === 'me';
+    const time = new Date(m.ts).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    let body = '';
+    if (isGroup && !mine){
+      body += `<span class="sender-label">${formatCode(m.from)}</span>`;
+    }
+    if (m.file){
+      const isImg = (m.file.mime || '').startsWith('image/');
+      if (isImg){
+        body += `<img class="msg-image" src="${m.file.data}" alt="${escapeHtml(m.file.name)}">
+          <div class="file-meta-row">
+            <span class="file-name">${escapeHtml(m.file.name)}</span>
+            <a class="file-dl" href="${m.file.data}" download="${escapeHtml(m.file.name)}" title="Speichern">${iconDownload()}</a>
+          </div>`;
+      } else {
+        body += `<div class="file-card">
+            <div class="file-icon">${iconFile()}</div>
+            <div class="file-info">
+              <div class="file-name">${escapeHtml(m.file.name)}</div>
+              <div class="file-size">${fmtSize(m.file.size)}</div>
+            </div>
+            <a class="file-dl" href="${m.file.data}" download="${escapeHtml(m.file.name)}" title="Speichern">${iconDownload()}</a>
+          </div>`;
+      }
+    } else {
+      body += escapeHtml(m.text);
+    }
+    return `<div class="msg-row ${mine?'mine':''}">
+      <div class="bubble ${mine?'mine':'theirs'} ${m.file?'has-file':''}">${body}<span class="meta">${time}${(mine && !isGroup) ? ' ' + receiptTicks(m.status) : ''}</span></div>
+    </div>`;
+  }).join('') || '<div class="no-chat">' + t('no_messages') + '</div>';
+  container.scrollTop = container.scrollHeight;
+  // Sichtbare eingehende Nachrichten als gelesen bestätigen (nur 1:1).
+  if (!isGroup && activeContact) markVisibleAsRead(activeContact);
+}
+
+// Haken je nach Zustellstatus. 'read' = farbige Doppelhaken.
+function receiptTicks(status){
+  if (status === 'read') return '<span class="ticks read">✓✓</span>';
+  if (status === 'delivered') return '<span class="ticks">✓✓</span>';
+  return '<span class="ticks">✓</span>'; // sent / unbekannt
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : s;
+  return d.innerHTML;
+}
+
+// Ein Payload an alle anderen Mitglieder einer Gruppe schicken (jeweils mit
+// deren 1:1-Schlüssel verschlüsselt; offline -> in deren Outbox).
+async function sendToGroup(group, payload){
+  for (const code of otherMembers(group)){
+    const conn = connections[code];
+    if (conn && conn.open && sharedKeys[code]){
+      const packet = await encryptPayload(code, payload);
+      if (packet) conn.send(packet);
+      else queueOutgoing(code, payload);
+    } else {
+      queueOutgoing(code, payload);
+    }
+  }
+}
+
+async function sendCurrentMessage(){
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const ts = Date.now();
+  const id = newId();
+
+  if (activeGroup){
+    const group = getGroup(activeGroup);
+    if (!group) return;
+    const thread = loadGroupThread(activeGroup);
+    thread.push({ from:'me', text, ts, id });
+    saveGroupThread(activeGroup, thread);
+    input.value = '';
+    renderMessages();
+    await sendToGroup(group, { kind:'group_msg', gid: group.id, text, ts, id });
+    return;
+  }
+
+  if (!activeContact) return;
+  const code = activeContact;
+  const thread = loadThread(code);
+  thread.push({ from: 'me', text, ts, id, status:'sent' });
+  saveThread(code, thread);
+  input.value = '';
+  sendTyping(false);
+  renderMessages();
+
+  const payload = { kind:'msg', text, ts, id };
+  const conn = connections[code];
+  if (conn && conn.open && sharedKeys[code]){
+    const packet = await encryptPayload(code, payload);
+    if (packet) conn.send(packet);
+    else queueOutgoing(code, payload);
+  } else {
+    queueOutgoing(code, payload);
+  }
+}
+
+function sendFile(file){
+  if (file.size > MAX_FILE_BYTES){
+    alert('Datei zu groß (max. ' + fmtSize(MAX_FILE_BYTES) + '). Diese hat ' + fmtSize(file.size) + '.');
+    return;
+  }
+  const toGroupId = activeGroup;
+  const toContact = activeContact;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const dataUrl = reader.result;
+    const ts = Date.now();
+    const id = newId();
+    const fileObj = { name: file.name, mime: file.type || 'application/octet-stream', size: file.size, data: dataUrl };
+
+    if (toGroupId){
+      const group = getGroup(toGroupId);
+      if (!group) return;
+      const thread = loadGroupThread(toGroupId);
+      thread.push({ from:'me', ts, id, file: fileObj });
+      saveGroupThread(toGroupId, thread);
+      if (activeGroup === toGroupId) renderMessages();
+      await sendToGroup(group, { kind:'group_file', gid: toGroupId, ts, id, name: fileObj.name, mime: fileObj.mime, size: fileObj.size, data: dataUrl });
+      return;
+    }
+
+    if (!toContact) return;
+    const thread = loadThread(toContact);
+    thread.push({ from: 'me', ts, id, file: fileObj, status:'sent' });
+    saveThread(toContact, thread);
+    if (activeContact === toContact) renderMessages();
+
+    const payload = { kind:'file', ts, id, name: fileObj.name, mime: fileObj.mime, size: fileObj.size, data: dataUrl };
+    const conn = connections[toContact];
+    if (conn && conn.open && sharedKeys[toContact]){
+      const packet = await encryptPayload(toContact, payload);
+      if (packet) conn.send(packet);
+      else queueOutgoing(toContact, payload);
+    } else {
+      queueOutgoing(toContact, payload);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---------------- Gruppen-Aktionen ---------------- */
+function createGroup(name, memberCodes){
+  const id = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const members = Array.from(new Set([myCode, ...memberCodes])).sort();
+  const group = { id, name: name.slice(0,60), members };
+  const groups = loadGroups();
+  groups.push(group);
+  saveGroups(groups);
+  // Einladung an alle anderen Mitglieder über den verschlüsselten 1:1-Kanal.
+  const invite = { kind:'group_invite', group: { id, name: group.name, members } };
+  otherMembers(group).forEach(async (code) => {
+    const conn = connections[code];
+    if (conn && conn.open && sharedKeys[code]){
+      const packet = await encryptPayload(code, invite);
+      if (packet) conn.send(packet);
+      else queueOutgoing(code, invite);
+    } else {
+      queueOutgoing(code, invite);
+    }
+  });
+  attemptReconnects();
+  activeGroup = id;
+  activeContact = null;
+  renderContactList();
+  renderChatPane();
+}
+
+function deleteGroupChat(gid){
+  const g = getGroup(gid);
+  if (!confirm('Gruppenverlauf von „' + (g ? g.name : 'Gruppe') + '" lokal löschen?')) return;
+  localStorage.removeItem(groupThreadKey(gid));
+  renderMessages();
+}
+
+function leaveGroup(gid){
+  const g = getGroup(gid);
+  if (!confirm('Gruppe „' + (g ? g.name : '') + '" verlassen? Der lokale Verlauf wird gelöscht.')) return;
+  saveGroups(loadGroups().filter(x => x.id !== gid));
+  localStorage.removeItem(groupThreadKey(gid));
+  if (activeGroup === gid) activeGroup = null;
+  renderContactList();
+  renderChatPane();
+}
+
+/* ---------------- Anrufe (WebRTC-Audio) ---------------- */
+function stopStream(stream){ if (stream) stream.getTracks().forEach(t => t.stop()); }
+
+/* --- Stimmenverzerrer ---
+   Pitch-Shifter „Jungle" (Delay-Modulation, native Web-Audio-Knoten) für tiefe/hohe
+   Stimme, plus Ringmodulation für den Roboter-Effekt. Der Ton läuft durch diesen
+   Graphen, bevor er an die Gegenseite geht — verändert wird nur die eigene Stimme. */
+const JUNGLE_DELAY = 0.100, JUNGLE_FADE = 0.050, JUNGLE_BUFFER = 0.100;
+function jungleFadeBuffer(ctx){
+  const l1 = JUNGLE_BUFFER*ctx.sampleRate, l2 = (JUNGLE_BUFFER-2*JUNGLE_FADE)*ctx.sampleRate, len = l1+l2;
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate), p = buf.getChannelData(0);
+  const fl = JUNGLE_FADE*ctx.sampleRate, fi1 = fl, fi2 = l1-fl;
+  for (let i=0;i<l1;i++){ p[i] = i<fi1 ? Math.sqrt(i/fl) : (i>=fi2 ? Math.sqrt(1-(i-fi2)/fl) : 1); }
+  for (let i=l1;i<len;i++) p[i]=0;
+  return buf;
+}
+function jungleDelayBuffer(ctx, up){
+  const l1 = JUNGLE_BUFFER*ctx.sampleRate, l2 = (JUNGLE_BUFFER-2*JUNGLE_FADE)*ctx.sampleRate, len = l1+l2;
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate), p = buf.getChannelData(0);
+  for (let i=0;i<l1;i++) p[i] = up ? (l1-i)/len : i/l1;
+  for (let i=l1;i<len;i++) p[i]=0;
+  return buf;
+}
+function Jungle(ctx){
+  this.context = ctx;
+  const input = ctx.createGain(), output = ctx.createGain();
+  const m1 = ctx.createBufferSource(), m2 = ctx.createBufferSource(), m3 = ctx.createBufferSource(), m4 = ctx.createBufferSource();
+  const down = jungleDelayBuffer(ctx, false), up = jungleDelayBuffer(ctx, true);
+  m1.buffer = down; m2.buffer = down; m3.buffer = up; m4.buffer = up;
+  m1.loop = m2.loop = m3.loop = m4.loop = true;
+  const g1 = ctx.createGain(), g2 = ctx.createGain(), g3 = ctx.createGain(), g4 = ctx.createGain();
+  g3.gain.value = 0; g4.gain.value = 0;
+  m1.connect(g1); m2.connect(g2); m3.connect(g3); m4.connect(g4);
+  const mg1 = ctx.createGain(), mg2 = ctx.createGain();
+  const d1 = ctx.createDelay(), d2 = ctx.createDelay();
+  g1.connect(mg1); g2.connect(mg2); g3.connect(mg1); g4.connect(mg2);
+  mg1.connect(d1.delayTime); mg2.connect(d2.delayTime);
+  const f1 = ctx.createBufferSource(), f2 = ctx.createBufferSource(), fb = jungleFadeBuffer(ctx);
+  f1.buffer = fb; f2.buffer = fb; f1.loop = true; f2.loop = true;
+  const mix1 = ctx.createGain(), mix2 = ctx.createGain();
+  mix1.gain.value = 0; mix2.gain.value = 0;
+  f1.connect(mix1.gain); f2.connect(mix2.gain);
+  input.connect(d1); input.connect(d2);
+  d1.connect(mix1); d2.connect(mix2);
+  mix1.connect(output); mix2.connect(output);
+  const t = ctx.currentTime + 0.05, t2 = t + JUNGLE_BUFFER - JUNGLE_FADE;
+  m1.start(t); m2.start(t2); m3.start(t); m4.start(t2); f1.start(t); f2.start(t2);
+  this.input = input; this.output = output;
+  this._g = [g1,g2,g3,g4]; this._mg = [mg1,mg2];
+  this.setPitchOffset = (mult) => {
+    if (mult > 0){ this._g[0].gain.value=0; this._g[1].gain.value=0; this._g[2].gain.value=1; this._g[3].gain.value=1; }
+    else { this._g[0].gain.value=1; this._g[1].gain.value=1; this._g[2].gain.value=0; this._g[3].gain.value=0; }
+    const dt = JUNGLE_DELAY * Math.abs(mult);
+    this._mg[0].gain.setTargetAtTime(0.5*dt, ctx.currentTime, 0.01);
+    this._mg[1].gain.setTargetAtTime(0.5*dt, ctx.currentTime, 0.01);
+  };
+}
+
+function buildVoiceProcessor(rawStream){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  const ctx = new AC();
+  const src = ctx.createMediaStreamSource(rawStream);
+  const dest = ctx.createMediaStreamDestination();
+  const jungle = new Jungle(ctx);
+  const dry = ctx.createGain(); dry.gain.value = 1;         // normale (evtl. pitch-verschobene) Stimme
+  const robotSwitch = ctx.createGain(); robotSwitch.gain.value = 0; // Roboter-Pfad aus
+  const ringOsc = ctx.createOscillator(); ringOsc.type = 'sine'; ringOsc.frequency.value = 50;
+  const ringMul = ctx.createGain(); ringMul.gain.value = 0; // Basis 0 → reine Ringmodulation
+  src.connect(jungle.input);
+  jungle.output.connect(dry); dry.connect(dest);
+  jungle.output.connect(ringMul); ringMul.connect(robotSwitch); robotSwitch.connect(dest);
+  ringOsc.connect(ringMul.gain);
+  ringOsc.start();
+  function setEffect(name){
+    jungle.setPitchOffset(name === 'deep' ? -0.5 : name === 'high' ? 0.6 : 0);
+    const robot = name === 'robot';
+    dry.gain.value = robot ? 0 : 1;
+    robotSwitch.gain.value = robot ? 1 : 0;
+  }
+  return {
+    stream: dest.stream,
+    setEffect,
+    destroy(){ try{ ringOsc.stop(); }catch(e){} try{ ctx.close(); }catch(e){} }
+  };
+}
+
+async function sendCall(code, payload){
+  const conn = connections[code];
+  if (conn && conn.open && sharedKeys[code]){
+    const packet = await encryptPayload(code, payload);
+    if (packet) conn.send(packet);
+    return true;
+  }
+  return false;
+}
+
+/* ---------------- Bestätigungen & „schreibt gerade …" ---------------- */
+async function sendReceipt(code, ids, state){
+  const conn = connections[code];
+  if (conn && conn.open && sharedKeys[code]){
+    const packet = await encryptPayload(code, { kind:'receipt', ids, state });
+    if (packet) conn.send(packet);
+  }
+}
+
+// Empfangene, noch nicht als „gelesen" quittierte Nachrichten des offenen Chats bestätigen.
+function markVisibleAsRead(code){
+  const thread = loadThread(code);
+  const ids = thread.filter(m => m.from === code && !m.readAcked).map(m => m.id).filter(Boolean);
+  if (!ids.length) return;
+  thread.forEach(m => { if (m.from === code) m.readAcked = true; });
+  saveThread(code, thread);
+  sendReceipt(code, ids, 'read');
+}
+
+function setTypingFrom(code, active){
+  if (!typingState[code]) typingState[code] = { active:false, timeout:null };
+  const st = typingState[code];
+  st.active = active;
+  if (st.timeout){ clearTimeout(st.timeout); st.timeout = null; }
+  if (active){
+    // Automatisch nach 5 s ausblenden, falls kein „false" nachkommt.
+    st.timeout = setTimeout(() => { st.active = false; if (activeContact === code) renderChatHead(); }, 5000);
+  }
+  if (activeContact === code) renderChatHead();
+}
+
+async function sendTyping(active){
+  if (!activeContact) return;
+  const now = Date.now();
+  if (active){
+    if (now - typingSentAt < 1500) return; // drosseln
+    typingSentAt = now;
+  }
+  const conn = connections[activeContact];
+  if (conn && conn.open && sharedKeys[activeContact]){
+    const packet = await encryptPayload(activeContact, { kind:'typing', state: active });
+    if (packet) conn.send(packet);
+  }
+}
+
+// Anruf STARTEN (nach Warn-Dialog). joinCode optional.
+async function startCall(code, joinCode){
+  if (activeCall){ showCallPopup('Bereits im Gespräch', 'Beende zuerst den laufenden Anruf.'); return; }
+  if (isCallLocked(code)){ showCallPopup('Anrufe gesperrt', 'Für diesen Chat sind Anrufe lokal gesperrt. Du kannst das in den Anruf-Einstellungen ändern.'); return; }
+  if (!online[code] || !sharedKeys[code]){ showCallPopup('Nicht erreichbar', 'Der Kontakt ist gerade nicht sicher verbunden.'); return; }
+
+  let rawStream;
+  try{
+    rawStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false });
+  } catch(e){
+    showCallPopup('Kein Mikrofon', 'Zugriff aufs Mikrofon wurde verweigert oder ist nicht möglich.');
+    return;
+  }
+  const voice = buildVoiceProcessor(rawStream);
+  const localStream = voice ? voice.stream : rawStream;
+
+  const sent = await sendCall(code, { kind:'call_request', joinCode: joinCode || '' });
+  if (!sent){
+    stopStream(rawStream);
+    if (voice) voice.destroy();
+    showCallPopup('Nicht erreichbar', 'Verbindung zum Kontakt verloren.');
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    if (pendingOutgoing && pendingOutgoing.code === code){
+      stopStream(pendingOutgoing.rawStream);
+      if (pendingOutgoing.voice) pendingOutgoing.voice.destroy();
+      pendingOutgoing = null;
+      showCallPopup('Keine Antwort', 'Der Kontakt hat nicht abgenommen.');
+    }
+  }, 30000);
+  pendingOutgoing = { code, localStream, rawStream, voice, timeout };
+  showCallPopup('Rufe an …', 'Warte darauf, dass ' + formatCode(code) + ' annimmt.', { spinner:true });
+}
+
+// Eingehende Anruf-ANFRAGE prüfen und ggf. anzeigen.
+function handleIncomingCallRequest(code, payload){
+  // Sicherheits-/Regelprüfungen — bei Verstoß automatisch ablehnen (mit Grund).
+  if (isCallLocked(code)){ sendCall(code, { kind:'call_reject', reason:'locked' }); return; }
+  if (activeCall || pendingOutgoing || incomingCall){ sendCall(code, { kind:'call_reject', reason:'busy' }); return; }
+  const required = getCallCode(code);
+  if (required && String(payload.joinCode || '') !== required){
+    sendCall(code, { kind:'call_reject', reason:'bad_code' });
+    showCallPopup('Anruf abgewiesen', formatCode(code) + ' hat mit falschem Beitritts-Code angerufen.');
+    return;
+  }
+  incomingCall = { code };
+  modalShell(`
+    <h3>Eingehender Anruf</h3>
+    <p><span class="mono" style="color:var(--accent);font-size:15px;">${formatCode(code)}</span> möchte mit dir sprechen.</p>
+    <p>Wenn du annimmst, wird eine direkte Audioverbindung aufgebaut. Dabei können sich beide Geräte gegenseitig ihre IP-Adressen zeigen.</p>
+    <div class="modal-actions">
+      <button class="danger-btn" id="call-decline">Ablehnen</button>
+      <button class="btn-primary" id="call-accept">Annehmen</button>
+    </div>
+  `);
+  document.getElementById('call-decline').addEventListener('click', () => declineIncomingCall('declined'));
+  document.getElementById('call-accept').addEventListener('click', acceptIncomingCall);
+}
+
+async function acceptIncomingCall(){
+  if (!incomingCall) return;
+  const code = incomingCall.code;
+  let rawStream;
+  try{
+    rawStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false });
+  } catch(e){
+    declineIncomingCall('declined');
+    showCallPopup('Kein Mikrofon', 'Zugriff aufs Mikrofon wurde verweigert.');
+    return;
+  }
+  const voice = buildVoiceProcessor(rawStream);
+  const localStream = voice ? voice.stream : rawStream;
+  // Medien-Anruf des Anrufers ankündigen und annehmen (siehe peer.on('call')).
+  window._pendingLocalStream = localStream;
+  window._pendingRawStream = rawStream;
+  window._pendingVoice = voice;
+  expectingCallFrom = code;
+  incomingCall = null;
+  closeModal();
+  await sendCall(code, { kind:'call_accept' });
+  // Sicherheitszeitfenster: kommt binnen 15 s kein Medien-Anruf, abbrechen.
+  setTimeout(() => {
+    if (expectingCallFrom === code && window._pendingLocalStream){
+      stopStream(window._pendingRawStream);
+      if (window._pendingVoice) window._pendingVoice.destroy();
+      window._pendingLocalStream = null; window._pendingRawStream = null; window._pendingVoice = null;
+      expectingCallFrom = null;
+      showCallPopup('Anruf abgebrochen', 'Es kam keine Medienverbindung zustande.');
+    }
+  }, 15000);
+}
+
+function declineIncomingCall(reason){
+  if (!incomingCall) return;
+  const code = incomingCall.code;
+  incomingCall = null;
+  closeModal();
+  sendCall(code, { kind:'call_reject', reason: reason || 'declined' });
+}
+
+// Anruf ist zustande gekommen (beide Seiten rufen das auf).
+function beginCall(code, mediaConn, localStream, rawStream, voice){
+  activeCall = { code, mediaConn, localStream, rawStream: rawStream || localStream, voice: voice || null, effect:'none', startTs: Date.now(), timer:null, muted:false };
+
+  mediaConn.on('stream', (remoteStream) => {
+    let audio = document.getElementById('remote-audio');
+    if (!audio){
+      audio = document.createElement('audio');
+      audio.id = 'remote-audio';
+      audio.autoplay = true;
+      document.body.appendChild(audio);
+    }
+    audio.srcObject = remoteStream;
+    // Sicherheit: es darf genau eine Audiospur ankommen.
+    const tracks = remoteStream.getAudioTracks();
+    if (tracks.length !== 1){
+      endCall('Unerwartete Medienspuren erkannt — Anruf gestoppt.');
+    }
+  });
+  mediaConn.on('close', () => {
+    if (activeCall && activeCall.code === code) endCall('Verbindung beendet.', { fromRemote:true });
+  });
+  mediaConn.on('error', () => {
+    if (activeCall && activeCall.code === code) endCall('Verbindungsfehler.', { fromRemote:true });
+  });
+
+  const pc = mediaConn.peerConnection;
+  if (pc) monitorPeerConnection(pc);
+
+  activeCall.timer = setInterval(updateCallTime, 1000);
+  renderCallOverlay();
+}
+
+// Nur die Dauer aktualisieren — baut das Overlay NICHT neu, damit ein geöffnetes
+// Stimmen-Menü offen bleibt.
+function updateCallTime(){
+  if (!activeCall) return;
+  const el = document.getElementById('call-sub');
+  if (!el) return;
+  const secs = Math.floor((Date.now() - activeCall.startTs) / 1000);
+  const mm = String(Math.floor(secs/60)).padStart(2,'0');
+  const ss = String(secs%60).padStart(2,'0');
+  const eff = activeCall.effect && activeCall.effect !== 'none' ? ' · ' + t('voice_'+activeCall.effect) : '';
+  el.textContent = formatCode(activeCall.code) + ' · ' + mm + ':' + ss + eff;
+}
+
+// Best-effort-Überwachung: stoppt den Anruf, wenn die Verbindung scheitert
+// oder über einen fremden Relay-Server (TURN) umgeleitet würde.
+function monitorPeerConnection(pc){
+  const onState = () => {
+    const s = pc.iceConnectionState;
+    if (s === 'failed' || s === 'closed'){
+      endCall('Verbindung unterbrochen oder umgeleitet (' + s + ').');
+    }
+  };
+  pc.addEventListener('iceconnectionstatechange', onState);
+
+  const iv = setInterval(async () => {
+    if (!activeCall){ clearInterval(iv); return; }
+    try{
+      const stats = await pc.getStats();
+      let flagged = null;
+      stats.forEach(r => {
+        if (r.type === 'candidate-pair' && r.nominated && (r.state === 'succeeded' || r.selected)){
+          const remote = stats.get(r.remoteCandidateId);
+          const local = stats.get(r.localCandidateId);
+          if ((remote && remote.candidateType === 'relay') || (local && local.candidateType === 'relay')){
+            flagged = 'Der Datenverkehr würde über einen fremden Server (Relay) laufen.';
+          }
+        }
+      });
+      if (flagged){
+        if (isAutoWipe()){ endCall(null); wipeEverything(t('wiped_redirect')); return; }
+        endCall(flagged);
+      }
+    } catch(e){}
+  }, 3000);
+  callMonitors.push(iv);
+}
+
+function toggleMute(){
+  if (!activeCall) return;
+  activeCall.muted = !activeCall.muted;
+  activeCall.rawStream.getAudioTracks().forEach(t => t.enabled = !activeCall.muted);
+  renderCallOverlay();
+}
+
+function setCallVoice(name){
+  if (!activeCall || !activeCall.voice) return;
+  activeCall.voice.setEffect(name);
+  activeCall.effect = name;
+  activeCall.menuOpen = false;
+  renderCallOverlay();
+}
+
+// Anruf BEENDEN. reason != null → Popup mit Grund. fromRemote → kein call_end senden.
+function endCall(reason, opts){
+  opts = opts || {};
+  const call = activeCall;
+  callMonitors.forEach(iv => clearInterval(iv));
+  callMonitors.length = 0;
+  if (call){
+    if (call.timer) clearInterval(call.timer);
+    if (!opts.fromRemote) sendCall(call.code, { kind:'call_end' });
+    try{ call.mediaConn.close(); }catch(e){}
+    stopStream(call.rawStream);
+    if (call.voice) call.voice.destroy();
+  }
+  activeCall = null;
+  const menu = document.getElementById('voice-menu');
+  if (menu) menu.remove();
+  const audio = document.getElementById('remote-audio');
+  if (audio){ audio.srcObject = null; audio.remove(); }
+  const ov = document.getElementById('call-overlay');
+  if (ov) ov.remove();
+  if (reason) showCallPopup('Anruf beendet', reason);
+}
+
+function renderCallOverlay(){
+  if (!activeCall) return;
+  const pane = document.getElementById('chat-pane');
+  if (!pane) return;
+  let ov = document.getElementById('call-overlay');
+  const secs = Math.floor((Date.now() - activeCall.startTs) / 1000);
+  const mm = String(Math.floor(secs/60)).padStart(2,'0');
+  const ss = String(secs%60).padStart(2,'0');
+  if (!ov){
+    ov = document.createElement('div');
+    ov.id = 'call-overlay';
+    ov.className = 'call-overlay';
+    pane.appendChild(ov);
+  }
+  const effects = [['none','voice_none'],['deep','voice_deep'],['high','voice_high'],['robot','voice_robot']];
+  const curEffect = activeCall.effect || 'none';
+  const voiceAvailable = !!activeCall.voice;
+  const menuOpen = !!activeCall.menuOpen;
+  ov.innerHTML = `
+    <div class="call-info">
+      <span class="call-pulse"></span>
+      <div style="min-width:0;">
+        <div class="call-title">Verschlüsselter Anruf</div>
+        <div class="call-sub" id="call-sub">${formatCode(activeCall.code)} · ${mm}:${ss}${curEffect!=='none' ? ' · '+t('voice_'+curEffect) : ''}</div>
+      </div>
+    </div>
+    <div class="call-actions">
+      ${voiceAvailable ? `<button class="call-mute ${curEffect!=='none'?'muted':''}" id="voice-btn" title="${t('voice')}">${iconVoice()}</button>` : ''}
+      <button class="call-mute ${activeCall.muted?'muted':''}" id="call-mute-btn" title="${activeCall.muted?'Stumm aus':'Stummschalten'}">${activeCall.muted?iconMicOff():iconMic()}</button>
+      <button class="call-hangup" id="call-hangup-btn">${iconPhoneOff()} Auflegen</button>
+    </div>
+    ${voiceAvailable ? `
+    <div id="voice-menu" style="display:${menuOpen?'block':'none'};position:absolute;top:100%;right:16px;margin-top:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px;z-index:9;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 10px;">${t('voice')}</div>
+      ${effects.map(([key,lbl]) => `
+        <button class="voice-opt" data-effect="${key}" style="display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;padding:10px;border:none;background:${key===curEffect?'var(--surface-2)':'transparent'};color:var(--text);border-radius:8px;font-size:13px;text-align:left;cursor:pointer;">
+          <span>${t(lbl)}</span>${key===curEffect?'<span style="color:var(--accent);">✓</span>':''}
+        </button>`).join('')}
+    </div>` : ''}
+  `;
+  document.getElementById('call-mute-btn').addEventListener('click', toggleMute);
+  document.getElementById('call-hangup-btn').addEventListener('click', () => endCall(null));
+  const voiceBtn = document.getElementById('voice-btn');
+  if (voiceBtn){
+    voiceBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      activeCall.menuOpen = !activeCall.menuOpen;
+      renderCallOverlay();
+    });
+    ov.querySelectorAll('.voice-opt').forEach(b => b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setCallVoice(b.dataset.effect);
+    }));
+  }
+}
+
+function showCallPopup(title, message, opts){
+  opts = opts || {};
+  modalShell(`
+    <h3>${title}</h3>
+    <p>${message}</p>
+    <div class="modal-actions"><button class="btn-primary" id="m-close">OK</button></div>
+  `);
+  document.getElementById('m-close').addEventListener('click', closeModal);
+}
+
+// Warn-Dialog VOR dem Anruf.
+function openCallWarning(code){
+  if (isCallLocked(code)){
+    showCallPopup('Anrufe gesperrt', 'Für diesen Chat sind Anrufe gesperrt. Du kannst das über die Anruf-Einstellungen (Zahnrad) ändern.');
+    return;
+  }
+  const hasCode = !!getCallCode(code);
+  modalShell(`
+    <h3>Vor dem Anruf</h3>
+    <p>Ein Anruf baut eine direkte Audioverbindung auf. Bitte beachte:</p>
+    <ul class="warn-list">
+      <li><b>IP-Adresse sichtbar:</b> Für die Direktverbindung zeigen sich beide Geräte gegenseitig ihre IP-Adresse — das verrät grob den Standort.</li>
+      <li><b>Mikrofon:</b> Dein Browser fragt nach Mikrofonzugriff. Der Ton geht direkt an die andere Person.</li>
+      <li><b>Nur zu zweit:</b> Es kann immer nur eine Person im Gespräch sein. Weitere Anrufe werden abgewiesen.</li>
+      <li><b>Umleitungs-Schutz:</b> Läuft der Verkehr plötzlich über einen fremden Server oder bricht die direkte Verbindung, wird der Anruf automatisch gestoppt und du bekommst eine Meldung.</li>
+      <li><b>Keine Garantie:</b> Diese Schutzmechanismen sind bestmöglich, aber kein absoluter Schutz. Sprich nichts Hochsensibles aus, was du nicht riskieren willst.</li>
+    </ul>
+    <div class="modal-field" ${hasCode ? '' : 'style="display:none;"'}>
+      <label>Beitritts-Code (von der anderen Person verlangt)</label>
+      <input id="call-join-code" type="text" inputmode="numeric" placeholder="Code eingeben">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="call-cancel">Abbrechen</button>
+      <button class="danger-btn" id="call-go">${iconPhone()} Jetzt anrufen</button>
+    </div>
+  `);
+  document.getElementById('call-cancel').addEventListener('click', closeModal);
+  document.getElementById('call-go').addEventListener('click', () => {
+    const jc = hasCode ? (document.getElementById('call-join-code').value.trim()) : '';
+    closeModal();
+    startCall(code, jc);
+  });
+}
+
+// Anruf-Einstellungen pro Chat: sperren + Beitritts-Code.
+function openCallSettings(code){
+  const locked = isCallLocked(code);
+  const pin = getCallCode(code);
+  modalShell(`
+    <h3>Anruf-Einstellungen</h3>
+    <p>Für den Chat mit <span class="mono" style="color:var(--accent);">${formatCode(code)}</span>.</p>
+    <div class="settings-toggle">
+      <div>
+        <div class="st-label">Anrufe sperren</div>
+        <div class="st-sub">Blockiert ein- und ausgehende Anrufe für diesen Chat.</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="lock-toggle" ${locked?'checked':''}><span class="slider"></span></label>
+    </div>
+    <div class="modal-field" style="margin-top:16px;">
+      <label>Beitritts-Code (optional)</label>
+      <input id="join-code-input" type="text" inputmode="numeric" maxlength="12" placeholder="leer = kein Code" value="${pin}">
+      <div class="st-sub" style="margin-top:6px;">Wer dich anruft, muss diesen Code kennen. Gib ihn nur der Person, die anrufen darf.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="cs-cancel">Abbrechen</button>
+      <button class="btn-primary" id="cs-save">Speichern</button>
+    </div>
+  `);
+  document.getElementById('cs-cancel').addEventListener('click', closeModal);
+  document.getElementById('cs-save').addEventListener('click', () => {
+    setCallLocked(code, document.getElementById('lock-toggle').checked);
+    setCallCode(code, document.getElementById('join-code-input').value.trim());
+    closeModal();
+    if (activeContact === code) renderChatHead();
+  });
+}
+
+/* ---------------- Modals ---------------- */
+function closeModal(){ const h = document.getElementById('modal-host'); if (h) h.innerHTML = ''; }
+function modalShell(inner){
+  const h = document.getElementById('modal-host');
+  h.innerHTML = `<div class="modal-backdrop" id="modal-backdrop"><div class="modal">${inner}</div></div>`;
+  document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-backdrop') closeModal();
+  });
+}
+
+function openGroupModal(){
+  const contacts = loadContacts();
+  if (contacts.length === 0){
+    modalShell(`
+      <h3>Gruppe erstellen</h3>
+      <p>Du brauchst zuerst mindestens einen Kontakt. Füge links den Code eines Freundes hinzu, dann kannst du eine Gruppe bilden.</p>
+      <div class="modal-actions"><button class="btn-primary" id="m-close">OK</button></div>
+    `);
+    document.getElementById('m-close').addEventListener('click', closeModal);
+    return;
+  }
+  modalShell(`
+    <h3>Neue Gruppe</h3>
+    <div class="modal-field">
+      <label>Gruppenname</label>
+      <input id="group-name" type="text" maxlength="60" placeholder="z.B. Familie">
+    </div>
+    <div class="modal-field">
+      <label>Mitglieder</label>
+      <div class="member-pick">
+        ${contacts.map(c => `
+          <label class="member-row">
+            <input type="checkbox" value="${c.code}">
+            <span class="mono">${formatCode(c.code)}</span>
+          </label>`).join('')}
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="m-cancel">Abbrechen</button>
+      <button class="btn-primary" id="m-create">Erstellen</button>
+    </div>
+  `);
+  document.getElementById('m-cancel').addEventListener('click', closeModal);
+  document.getElementById('m-create').addEventListener('click', () => {
+    const name = document.getElementById('group-name').value.trim();
+    const picked = Array.from(document.querySelectorAll('.member-pick input:checked')).map(i => i.value);
+    if (!name){ alert('Bitte einen Gruppennamen eingeben.'); return; }
+    if (picked.length === 0){ alert('Bitte mindestens ein Mitglied auswählen.'); return; }
+    closeModal();
+    createGroup(name, picked);
+  });
+}
+
+function openGroupMembersModal(gid){
+  const g = getGroup(gid);
+  if (!g) return;
+  modalShell(`
+    <h3>${escapeHtml(g.name)}</h3>
+    <p>${g.members.length} Mitglieder. Grün = gerade online.</p>
+    <div class="member-pick">
+      ${g.members.map(code => {
+        const me = code === myCode;
+        const on = me || online[code];
+        return `<div class="member-row" style="cursor:default;">
+          <span class="presence-dot ${on?'online':''}" style="position:static;border:none;"></span>
+          <span class="mono">${formatCode(code)}${me?' (du)':''}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-actions"><button class="btn-primary" id="m-close">Schließen</button></div>
+  `);
+  document.getElementById('m-close').addEventListener('click', closeModal);
+}
+
+async function openVerifyModal(code){
+  const num = await safetyNumber(code);
+  modalShell(`
+    <h3>Sicherheitsnummer</h3>
+    <p>Diese Nummer ist auf deinem und dem Gerät deines Freundes <b>identisch</b>, wenn die Verbindung wirklich nur zwischen euch besteht. Vergleicht sie über einen zweiten Weg (persönlich, Anruf). Stimmen sie überein, hört niemand mit.</p>
+    ${num ? `<div class="fingerprint">${num}</div>` : `<p>Noch keine sichere Verbindung — bitte warten, bis der Kontakt online ist.</p>`}
+    <div class="modal-actions"><button class="btn-primary" id="m-close">Schließen</button></div>
+  `);
+  document.getElementById('m-close').addEventListener('click', closeModal);
+}
+
+function openInfoModal(){
+  const sec = (h,p) => `<p><b>${t(h)}</b><br>${t(p)}</p>`;
+  modalShell(`
+    <h3>${t('info_title')}</h3>
+    ${sec('info_code_h','info_code_p')}
+    ${sec('info_safety_h','info_safety_p')}
+    ${sec('info_e2e_h','info_e2e_p')}
+    ${sec('info_identity_h','info_identity_p')}
+    ${sec('info_ticks_h','info_ticks_p')}
+    ${sec('info_timer_h','info_timer_p')}
+    ${sec('info_groups_h','info_groups_p')}
+    ${sec('info_calls_h','info_calls_p')}
+    ${sec('info_wipe_h','info_wipe_p')}
+    <div class="modal-actions"><button class="btn-primary" id="m-close">${t('trust')}</button></div>
+  `);
+  document.getElementById('m-close').addEventListener('click', closeModal);
+}
+
+function openTTLModal(convKey){
+  const cur = getTTL(convKey);
+  const opts = [
+    { label:'1 Stunde', ms: 60*60*1000 },
+    { label:'24 Stunden', ms: 24*60*60*1000 },
+    { label:'7 Tage', ms: 7*24*60*60*1000 },
+    { label:'Nie löschen', ms: -1 }
+  ];
+  modalShell(`
+    <h3>Löschtimer</h3>
+    <p>Nachrichten in diesem Chat werden nach der gewählten Zeit automatisch gelöscht.</p>
+    <div class="member-pick">
+      ${opts.map((o,i) => `
+        <label class="member-row">
+          <input type="radio" name="ttl" value="${o.ms}" ${o.ms===cur?'checked':''}>
+          <span>${o.label}</span>
+        </label>`).join('')}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="ttl-cancel">Abbrechen</button>
+      <button class="btn-primary" id="ttl-save">Speichern</button>
+    </div>
+  `);
+  document.getElementById('ttl-cancel').addEventListener('click', closeModal);
+  document.getElementById('ttl-save').addEventListener('click', () => {
+    const sel = document.querySelector('input[name="ttl"]:checked');
+    if (sel){ setTTL(convKey, parseInt(sel.value, 10)); purgeOldMessages(); }
+    closeModal();
+  });
+}
+
+function openSecurityModal(){
+  const autow = isAutoWipe();
+  modalShell(`
+    <h3>Sicherheits-Center</h3>
+    <div class="settings-toggle">
+      <div>
+        <div class="st-label">Automatischer Sicherheits-Wipe</div>
+        <div class="st-sub">Löscht sofort ALLE Kontakte und Chats, wenn ein möglicher Angriff erkannt wird (geänderter Schlüssel eines Kontakts, oder Umleitung während eines Anrufs).</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="autowipe-toggle" ${autow?'checked':''}><span class="slider"></span></label>
+    </div>
+    <p style="margin-top:14px;"><b>Achtung:</b> Bei aktivem Wipe löst auch ein <i>harmloser</i> Schlüsselwechsel (Freund erzeugt neue Identität) die Löschung aus. Das ist der Preis für maximale Vorsicht.</p>
+    <div style="border-top:1px solid var(--line);margin:16px 0 12px;"></div>
+    <p><b>Identitätsschlüssel:</b> Bestimmt deine Sicherheitsnummer. Neu erzeugen, falls du ihn für kompromittiert hältst — Kontakte bekommen dann eine Warnung.</p>
+    <button class="btn-ghost" id="regen-identity" style="width:100%;margin-bottom:16px;">Identitätsschlüssel ändern</button>
+    <p><b>Sofort löschen:</b> Entfernt Identität, Code, Kontakte, Gruppen und alle Verläufe unwiderruflich von diesem Gerät.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="sec-close">Schließen</button>
+      <button class="danger-btn" id="panic-wipe">Alles jetzt löschen</button>
+    </div>
+  `);
+  document.getElementById('autowipe-toggle').addEventListener('change', (e) => setAutoWipe(e.target.checked));
+  document.getElementById('regen-identity').addEventListener('click', () => { closeModal(); regenerateIdentity(); });
+  document.getElementById('sec-close').addEventListener('click', closeModal);
+  document.getElementById('panic-wipe').addEventListener('click', () => {
+    if (confirm('Wirklich ALLES löschen? Kontakte, Gruppen, Verläufe, Identität und Code. Das lässt sich nicht rückgängig machen.')){
+      wipeEverything('Alle Daten wurden auf deinen Wunsch gelöscht.');
+    }
+  });
+}
+
+/* zusätzliche Icons */
+function iconTimer(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M5 3L2 6"></path><path d="M22 6l-3-3"></path></svg>';
+}
+function iconVoice(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h3l2-7 4 14 3-9 2 4h6"></path></svg>';
+}
+function iconUsers(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
+}
+function iconGroupSmall(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>';
+}
+function iconShield(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>';
+}
+function iconPhone(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>';
+}
+function iconPhoneOff(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"></path><line x1="23" y1="1" x2="1" y2="23"></line></svg>';
+}
+function iconMic(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>';
+}
+function iconMicOff(){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line></svg>';
+}
+function iconGear(){
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
+}
+
+/* ================= Sprache (i18n) ================= */
+const LANG = {
+  de: {
+    welcome_title:'Willkommen bei Chiffre',
+    welcome_sub:'Wähle Sprache und Design. Beides kannst du später jederzeit ändern.',
+    language:'Sprache', design:'Design', start:'Los geht\'s',
+    connecting:'Verbinde …', broker_on:'Vermittlung verbunden', broker_err:'Vermittlung getrennt — versuche erneut …',
+    your_code:'Dein Code', copied:'kopiert!', change_code:'Code ändern',
+    friend_code_ph:'10-stelliger Code', group:'Gruppe', security:'Sicherheit', info:'Info', design_btn:'Design',
+    no_contacts:'Noch keine Kontakte. Trag oben den Code deines Freundes ein — oder erstell unten eine Gruppe.',
+    requests:'Anfragen', groups:'Gruppen', contacts:'Kontakte',
+    unknown_contact:'Unbekannter Kontakt', wants_chat:'möchte chatten',
+    online:'online', offline:'offline', members:'Mitglieder', online_n:'online',
+    pick_chat:'Wähle links einen Kontakt oder eine Gruppe — oder füge einen neuen Code hinzu.',
+    write_msg:'Nachricht schreiben …', send:'Senden',
+    e2e:'Ende-zu-Ende', connecting_badge:'verbinde …',
+    online_direct:'online — direkt verbunden', offline_queue:'offline — wird nachgesendet, sobald ihr beide online seid',
+    typing:'schreibt gerade …',
+    no_messages:'Noch keine Nachrichten. Schreib die erste.',
+    call:'Anrufen', delete_timer:'Löschtimer', call_settings:'Anruf-Einstellungen', verify:'Sicherheitsnummer prüfen',
+    delete_chat_t:'Chatverlauf löschen (auch beim Freund)', remove_contact:'Kontakt entfernen',
+    group_delete_t:'Gruppenverlauf löschen', leave_group:'Gruppe verlassen', members_t:'Mitglieder',
+    ok:'OK', cancel:'Abbrechen', save:'Speichern', close:'Schließen', trust:'Verstanden',
+    code_is:'Das ist dein eigener Code.', code_len:'Der Code hat 10 Ziffern.',
+    // Info
+    info_title:'Wie Chiffre funktioniert & wofür alles da ist',
+    info_code_h:'Dein Code', info_code_p:'Eine feste 10-stellige Nummer für dieses Gerät — wie eine Telefonnummer. Wer mit dir chatten will, trägt sie bei sich ein. Nur darüber finden sich eure Geräte. Du kannst sie ändern (z. B. wenn du sie zu vielen gegeben hast).',
+    info_safety_h:'Sicherheitsnummer', info_safety_p:'Eine Zahl, die auf deinem und dem Gerät deines Freundes identisch ist, wenn wirklich nur ihr beide verbunden seid. Vergleicht ihr sie über einen zweiten Weg (persönlich, Anruf) und sie stimmt überein, hört niemand mit. Weicht sie ab, sitzt evtl. jemand dazwischen.',
+    info_e2e_h:'Ende-zu-Ende-Verschlüsselung', info_e2e_p:'Nachrichten, Dateien und Anrufe werden mit ECDH + AES-256 verschlüsselt, bevor sie dein Gerät verlassen. Der Vermittlungsdienst hilft nur beim Erstkontakt und sieht keine Inhalte.',
+    info_identity_h:'Identitätsschlüssel', info_identity_p:'Der geheime Schlüssel hinter deiner Sicherheitsnummer. Er ist fest gespeichert. Ändert sich der Schlüssel eines Kontakts, warnt dich die App — das könnte ein Angriff sein.',
+    info_ticks_h:'Haken & „schreibt gerade …"', info_ticks_p:'Ein Haken = gesendet, zwei graue = zugestellt, zwei farbige = gelesen. Tippt dein Kontakt, siehst du „schreibt gerade …".',
+    info_timer_h:'Löschtimer', info_timer_p:'Pro Chat einstellbar (Uhr-Symbol): von 1 Stunde bis „nie". Nachrichten verschwinden danach automatisch auf beiden Geräten.',
+    info_groups_h:'Gruppen', info_groups_p:'Ein direktes Netz: jede Nachricht wird für jedes Mitglied einzeln verschlüsselt. Es gibt keinen zentralen Gruppenschlüssel.',
+    info_calls_h:'Anrufe', info_calls_p:'Direkte, verschlüsselte Audioverbindung. Du kannst Anrufe pro Chat sperren oder einen Beitritts-Code verlangen. Erkennt die App eine Umleitung, stoppt sie den Anruf.',
+    info_wipe_h:'Sicherheits-Wipe', info_wipe_p:'Optional: löscht automatisch alle Kontakte und Chats, wenn ein möglicher Angriff erkannt wird. Dazu gibt es einen Panik-Knopf im Sicherheits-Center.',
+    wiped_title:'Alles gelöscht', wiped_ok:'Neu starten',
+    wiped_generic:'Aus Sicherheitsgründen wurden alle Kontakte und Chats von diesem Gerät entfernt.',
+    wiped_keychange:'Sicherheits-Wipe: Die Sicherheitsnummer von {0} hat sich geändert (möglicher Angriff). Alle Kontakte und Chats wurden bereits gelöscht.',
+    wiped_redirect:'Sicherheits-Wipe: Der Anruf-Datenverkehr wurde umgeleitet. Alle Kontakte und Chats wurden bereits gelöscht.',
+    chats_wiped_identity:'Neue Sicherheitsnummer erzeugt. Aus Sicherheitsgründen wurden alle Chatverläufe gelöscht — deine Kontakte bleiben erhalten.',
+    voice:'Stimme', voice_none:'Normal', voice_deep:'Tief', voice_high:'Hoch', voice_robot:'Roboter',
+    profile_pic:'Profilbild', no_pic:'Kein Bild',
+  },
+  en: {
+    welcome_title:'Welcome to Chiffre',
+    welcome_sub:'Choose language and design. You can change both anytime later.',
+    language:'Language', design:'Design', start:'Get started',
+    connecting:'Connecting …', broker_on:'Relay connected', broker_err:'Relay disconnected — retrying …',
+    your_code:'Your code', copied:'copied!', change_code:'Change code',
+    friend_code_ph:'10-digit code', group:'Group', security:'Security', info:'Info', design_btn:'Design',
+    no_contacts:'No contacts yet. Enter a friend\'s code above — or create a group below.',
+    requests:'Requests', groups:'Groups', contacts:'Contacts',
+    unknown_contact:'Unknown contact', wants_chat:'wants to chat',
+    online:'online', offline:'offline', members:'members', online_n:'online',
+    pick_chat:'Pick a contact or group on the left — or add a new code.',
+    write_msg:'Write a message …', send:'Send',
+    e2e:'End-to-end', connecting_badge:'connecting …',
+    online_direct:'online — directly connected', offline_queue:'offline — will be delivered once you\'re both online',
+    typing:'typing …',
+    no_messages:'No messages yet. Write the first one.',
+    call:'Call', delete_timer:'Delete timer', call_settings:'Call settings', verify:'Check safety number',
+    delete_chat_t:'Delete chat history (also on friend\'s side)', remove_contact:'Remove contact',
+    group_delete_t:'Delete group history', leave_group:'Leave group', members_t:'Members',
+    ok:'OK', cancel:'Cancel', save:'Save', close:'Close', trust:'Got it',
+    code_is:'That\'s your own code.', code_len:'The code has 10 digits.',
+    info_title:'How Chiffre works & what everything is for',
+    info_code_h:'Your code', info_code_p:'A fixed 10-digit number for this device — like a phone number. Anyone who wants to chat enters it on their side. Your devices find each other only through it. You can change it (e.g. if too many people have it).',
+    info_safety_h:'Safety number', info_safety_p:'A number that is identical on your and your friend\'s device when only the two of you are connected. Compare it over a second channel (in person, a call); if it matches, nobody is listening in. If it differs, someone may be in the middle.',
+    info_e2e_h:'End-to-end encryption', info_e2e_p:'Messages, files and calls are encrypted with ECDH + AES-256 before they leave your device. The relay service only helps with first contact and sees no content.',
+    info_identity_h:'Identity key', info_identity_p:'The secret key behind your safety number. It is stored permanently. If a contact\'s key changes, the app warns you — that could be an attack.',
+    info_ticks_h:'Ticks & "typing …"', info_ticks_p:'One tick = sent, two grey = delivered, two coloured = read. When your contact types, you see "typing …".',
+    info_timer_h:'Delete timer', info_timer_p:'Adjustable per chat (clock icon): from 1 hour to "never". Messages then vanish automatically on both devices.',
+    info_groups_h:'Groups', info_groups_p:'A direct mesh: each message is encrypted separately for each member. There is no central group key.',
+    info_calls_h:'Calls', info_calls_p:'Direct, encrypted audio. You can lock calls per chat or require a join code. If the app detects a redirect, it stops the call.',
+    info_wipe_h:'Security wipe', info_wipe_p:'Optional: automatically deletes all contacts and chats when a possible attack is detected. There is also a panic button in the Security Center.',
+    wiped_title:'Everything deleted', wiped_ok:'Restart',
+    wiped_generic:'For security reasons, all contacts and chats were removed from this device.',
+    wiped_keychange:'Security wipe: the safety number of {0} changed (possible attack). All contacts and chats have already been deleted.',
+    wiped_redirect:'Security wipe: call traffic was redirected. All contacts and chats have already been deleted.',
+    chats_wiped_identity:'New safety number generated. For security, all chat histories were deleted — your contacts are kept.',
+    voice:'Voice', voice_none:'Normal', voice_deep:'Deep', voice_high:'High', voice_robot:'Robot',
+    profile_pic:'Profile picture', no_pic:'No picture',
+  }
+};
+let currentLang = localStorage.getItem('chiffre_lang') || 'de';
+function t(key){
+  const dict = LANG[currentLang] || LANG.de;
+  let s = (key in dict) ? dict[key] : (LANG.de[key] || key);
+  for (let i=1;i<arguments.length;i++){ s = s.replace('{'+(i-1)+'}', arguments[i]); }
+  return s;
+}
+
+/* ================= Design / Themes ================= */
+const THEMES = {
+  midnight: { name:{de:'Mitternacht',en:'Midnight'}, vars:{
+    '--bg':'#0A0F1C','--surface':'#111A2E','--surface-2':'#17233D','--line':'#223252',
+    '--accent':'#4FD1C5','--accent-soft':'#2A5C57','--self-bubble':'#2A3F73','--self-bubble-line':'#405AA0',
+    '--text':'#E7ECF7','--muted':'#7C8AA8','--danger':'#EF7A63' } },
+  plum: { name:{de:'Karmesin',en:'Crimson'}, vars:{
+    '--bg':'#120608','--surface':'#1C0C10','--surface-2':'#271115','--line':'#3D1A20',
+    '--accent':'#D92D3A','--accent-soft':'#4A161B','--self-bubble':'#4A151A','--self-bubble-line':'#7A2028',
+    '--text':'#F2E4E6','--muted':'#A07A80','--danger':'#FF5A4D' } },
+  forest: { name:{de:'Tarnung',en:'Covert'}, vars:{
+    '--bg':'#0B0E09','--surface':'#12160E','--surface-2':'#1B2114','--line':'#2C3620',
+    '--accent':'#8FA31E','--accent-soft':'#333D18','--self-bubble':'#2E3A18','--self-bubble-line':'#4A5A28',
+    '--text':'#E8ECDD','--muted':'#8A947A','--danger':'#D4703B' } },
+  daylight: { name:{de:'Tageslicht',en:'Daylight'}, vars:{
+    '--bg':'#EEF1F6','--surface':'#FFFFFF','--surface-2':'#F1F4F9','--line':'#D5DCE7',
+    '--accent':'#1F9E92','--accent-soft':'#CDEBE7','--self-bubble':'#D6E2FA','--self-bubble-line':'#A9C3F0',
+    '--text':'#141A24','--muted':'#5E6B80','--danger':'#D4553B' } }
+};
+function applyTheme(name){
+  const th = THEMES[name] || THEMES.midnight;
+  Object.entries(th.vars).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+  localStorage.setItem('chiffre_theme', name);
+}
+
+/* ================= Willkommensbildschirm ================= */
+function renderWelcome(){
+  const langs = [['de','Deutsch','DE'],['en','English','EN']];
+  app.innerHTML = `
+    <div style="min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:22px;">
+      ${brandmark(40)}
+      <div style="text-align:center;max-width:420px;">
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:8px;">${t('welcome_title')}</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.6;">${t('welcome_sub')}</div>
+      </div>
+      <div style="width:100%;max-width:380px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">🌐</span>
+          <span style="font-family:var(--font-display);font-size:17px;font-weight:600;">${t('language')} / Language</span>
+        </div>
+        <div id="lang-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:30px;">
+          ${langs.map(([code,label,tag]) => `
+            <button class="lang-big ${code===currentLang?'sel':''}" data-lang="${code}">
+              <span class="lang-tag">${tag}</span>
+              <span class="lang-name">${label}</span>
+            </button>`).join('')}
+        </div>
+        <div class="my-code-label" style="margin-bottom:8px;">${t('design')}</div>
+        <div id="theme-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:26px;">
+          ${Object.entries(THEMES).map(([key,th]) => `
+            <button class="theme-opt" data-theme="${key}" style="padding:12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--text);display:flex;align-items:center;gap:8px;">
+              <span style="display:inline-flex;gap:3px;">
+                <span style="width:12px;height:12px;border-radius:50%;background:${th.vars['--accent']};"></span>
+                <span style="width:12px;height:12px;border-radius:50%;background:${th.vars['--surface']};border:1px solid var(--line);"></span>
+              </span>
+              <span style="font-size:13px;">${th.name[currentLang] || th.name.de}</span>
+            </button>`).join('')}
+        </div>
+        <button class="btn-primary" id="welcome-start" style="width:100%;padding:14px;font-size:15px;">${t('start')}</button>
+      </div>
+    </div>
+  `;
+  app.querySelectorAll('.lang-big').forEach(b => b.addEventListener('click', () => {
+    currentLang = b.dataset.lang;
+    localStorage.setItem('chiffre_lang', currentLang);
+    renderWelcome();
+  }));
+  app.querySelectorAll('.theme-opt').forEach(b => {
+    if (b.dataset.theme === (localStorage.getItem('chiffre_theme') || 'midnight')){
+      b.style.borderColor = 'var(--accent)';
+    }
+    b.addEventListener('click', () => {
+      applyTheme(b.dataset.theme);
+      renderWelcome();
+    });
+  });
+  document.getElementById('welcome-start').addEventListener('click', () => {
+    localStorage.setItem('chiffre_onboarded', '1');
+    initPeer();
+    renderShell();
+  });
+}
+
+function openDesignModal(){
+  const curTheme = localStorage.getItem('chiffre_theme') || 'midnight';
+  const curAv = getMyAvatar();
+  modalShell(`
+    <h3>${t('design')} & ${t('language')}</h3>
+    <div class="my-code-label" style="margin-bottom:8px;">${t('profile_pic')}</div>
+    <div class="avatar-pick" style="margin-bottom:20px;">
+      ${AVATAR_IDS.map(id => `
+        <button class="avatar-opt ${id===curAv?'sel':''}" data-avatar="${id}" title="${id==='none'?t('no_pic'):''}">
+          ${id==='none' ? '<span>'+formatCode(myCode).slice(0,2)+'</span>' : avatarArt(id)}
+        </button>`).join('')}
+    </div>
+    <div class="my-code-label" style="margin-bottom:8px;">${t('language')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
+      ${[['de','Deutsch'],['en','English']].map(([code,label]) => `
+        <button class="btn-ghost dl-lang" data-lang="${code}" style="padding:11px;${code===currentLang?'border-color:var(--accent);color:var(--text);':''}">${label}</button>`).join('')}
+    </div>
+    <div class="my-code-label" style="margin-bottom:8px;">${t('design')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${Object.entries(THEMES).map(([key,th]) => `
+        <button class="dl-theme" data-theme="${key}" style="padding:11px;border:1px solid ${key===curTheme?'var(--accent)':'var(--line)'};border-radius:10px;background:transparent;color:var(--text);display:flex;align-items:center;gap:8px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:${th.vars['--accent']};"></span>
+          <span style="font-size:13px;">${th.name[currentLang]||th.name.de}</span>
+        </button>`).join('')}
+    </div>
+    <div class="modal-actions"><button class="btn-primary" id="dl-close">${t('close')}</button></div>
+  `);
+  document.querySelectorAll('.avatar-opt').forEach(b => b.addEventListener('click', () => {
+    setMyAvatar(b.dataset.avatar);
+    // Kontakten das neue Bild direkt mitteilen (über den verschlüsselten Kanal).
+    broadcastAvatar();
+    openDesignModal();
+  }));
+  document.querySelectorAll('.dl-theme').forEach(b => b.addEventListener('click', () => { applyTheme(b.dataset.theme); openDesignModal(); }));
+  document.querySelectorAll('.dl-lang').forEach(b => b.addEventListener('click', () => {
+    currentLang = b.dataset.lang; localStorage.setItem('chiffre_lang', currentLang);
+    closeModal(); renderShell();
+  }));
+  document.getElementById('dl-close').addEventListener('click', closeModal);
+}
+
+// Neues Profilbild an alle verbundenen Kontakte schicken.
+function broadcastAvatar(){
+  const av = getMyAvatar();
+  Object.keys(connections).forEach(async code => {
+    const conn = connections[code];
+    if (conn && conn.open && sharedKeys[code]){
+      const packet = await encryptPayload(code, { kind:'avatar', avatar: av });
+      if (packet) conn.send(packet);
+    }
+  });
+}
+
+applyTheme(localStorage.getItem('chiffre_theme') || 'midnight');
+purgeOldMessages();
+setInterval(purgeOldMessages, 60000);
+
+ensureKeyPair().then(() => {
+  if (localStorage.getItem('chiffre_onboarded') === '1'){
+    initPeer();
+    renderShell();
+  } else {
+    renderWelcome();
+  }
+});
+</script>
+</body>
+</html>
